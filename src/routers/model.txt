@@ -1,0 +1,12 @@
+-- login legal
+name
+email
+phone
+password
+company name
+PNFL
+-- login physical
+name
+email
+phone
+password
