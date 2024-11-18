@@ -1,30 +1,31 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import LegalUser from '../models/legal-user';
-import PhysicalUser from '../models/physical-user';
+import physicalUser from '../models/physical-user';
+import legalUser from '../models/legal-user';
 
-import { generateToken } from '../utils/jwt';
 
-// Get current user
 export const getCurrentUser = async (req: Request, res: Response) => {
     try {
         let data
         if (req.user.isLegal) {
             data = {
+                id: req.user.userLegal._id,
                 name: req.user.userLegal.name,
                 phone: req.user.userLegal.phone,
                 email: req.user.userLegal.email,
-                score: req.user.userLegal.point,
+                point: req.user.userLegal.point,
                 status: req.user.userLegal.status,
                 company_name: req.user.userLegal.company_name,
-                pnfl: req.user.userLegal.pnfl
+                pnfl: req.user.userLegal.pnfl,
+                legal: true
             }
         } else {
             data = {
+                id: req.user.userPhysical._id,
                 name: req.user.userPhysical.name,
                 phone: req.user.userPhysical.phone,
                 email: req.user.userPhysical.email,
-                score: req.user.userPhysical.point
+                point: req.user.userPhysical.point,
+                legal: false
             }
         }
         res.json(data);
@@ -33,13 +34,39 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     }
 };
 
-// Get current user
-export const getCurrentUserP = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response) => {
     try {
-        const user = await PhysicalUser.findById(req.user._id).select('-password');
-        if (!user) res.status(404).json({ message: 'User not found' });
-        res.json(user);
+
+        const { id, updateData } = req.body;
+
+        if (!id || !updateData) {
+            return res.status(400).json({ message: 'Missing required fields: id, or updateData' });
+        }
+
+        let updatedUser;
+
+
+        if (req.user.isLegal) {
+            updatedUser = await legalUser.findByIdAndUpdate(
+                id,
+                { $set: updateData },
+                { new: true, runValidators: true }
+            );
+        } else {
+            updatedUser = await physicalUser.findByIdAndUpdate(
+                id,
+                { $set: updateData },
+                { new: true, runValidators: true }
+            );
+        }
+
+        if (!updatedUser) {
+            res.status(404).json({ message: `User with id ${id} not found.` });
+            return
+        }
+
+        res.json({ data: updatedUser });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching user data', error });
+        res.status(500).json({ message: 'Error updating user', error });
     }
 };
