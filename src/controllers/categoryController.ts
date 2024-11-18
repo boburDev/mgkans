@@ -1,12 +1,9 @@
 import { Request, Response } from 'express';
-import path from 'path';
-import fs from 'fs';
 import Category from '../models/category';
-
+import SubCategory from '../models/sub-category';
 export const getAllCategory = async (req: Request, res: Response) => {
     try {
         const catalog = await Category.find().select("title path route colour order -_id").sort({ order: 1 });
-        console.log("Documents found:", catalog);
         res.status(201).json({ catalog });
     } catch (error) {
         res.status(500).json({ message: 'Error creating user', error });
@@ -34,3 +31,20 @@ export const createCategory = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error creating user', error });
     }
 };
+
+export const createSubCategory = async (req: Request, res: Response) => {
+    try {
+        const data = {
+            name: req.body.name,
+            categoryId: req.body.colour
+        }
+
+        const newCategory = new SubCategory(data);
+        await newCategory.save();
+
+        res.json({ data: newCategory, error: false, message: null })
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating user', error });
+    }
+};
+

@@ -6,6 +6,7 @@ interface PUser extends Document {
     phone?: string;
     password: string;
     point?: number;
+    
 }
 
 const physicalUserSchema: Schema = new Schema({

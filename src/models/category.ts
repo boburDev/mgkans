@@ -1,6 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-// Define an interface for the document
 interface CategoryModel extends Document {
     title?: string;
     route: string;
@@ -9,7 +8,6 @@ interface CategoryModel extends Document {
     order: number;
 }
 
-// Create the schema
 const CategorySchema = new Schema<CategoryModel>(
     {
         title: { type: String, required: false },
@@ -19,7 +17,7 @@ const CategorySchema = new Schema<CategoryModel>(
         order: { type: Number, required: true, default: 1 }
     },
     {
-        timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
+        timestamps: true,
     }
 );
 

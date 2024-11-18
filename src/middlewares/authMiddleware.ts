@@ -6,7 +6,7 @@ import User from '../types/user';
 
 declare module 'express-serve-static-core' {
     interface Request {
-        user: LUser | PUser;
+        user: any;
     }
 }
 
@@ -17,18 +17,23 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
     try {
         let decoded: User | null = verify(String(token));
-        console.log(decoded);
         
         if (!decoded) throw new Error("Invalid token!");
 
         if (decoded.isLegal) {
-            const userLegal = await legalUser.findById(decoded.id);
+            const userLegal = await legalUser.findById(decoded.id).select('-password');
             if (!userLegal) throw new Error('User not found!');
-            req.user = userLegal
+            req.user = {
+                isLegal: decoded.isLegal,
+                userLegal
+            }
         } else {
-            const userPhysical = await physicalUser.findById(decoded.id);
+            const userPhysical = await physicalUser.findById(decoded.id).select('-password');
             if (!userPhysical) throw new Error('User not found!');
-            req.user = userPhysical
+            req.user = {
+                isLegal: decoded.isLegal,
+                userPhysical
+            }
         }
         next();
     } catch (err) {
