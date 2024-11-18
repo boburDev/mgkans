@@ -61,13 +61,3 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 };
 
-// Get current user
-export const getCurrentUser = async (req: Request, res: Response) => {
-    try {
-        const user = await PhysicalUser.findById(req.user._id).select('-password');
-        if (!user) res.status(404).json({ message: 'User not found' });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching user data', error });
-    }
-};

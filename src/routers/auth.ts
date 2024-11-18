@@ -12,8 +12,8 @@ router
     .post('/legal-login', legalUser.loginUser)
     .post('/physical-login', physicalUser.loginUser)
 
-    .get('/legal-me', authMiddleware, legalUser.getCurrentUser)
-    .get('/physical-me', authMiddleware, physicalUser.getCurrentUser)
+    // .get('/legal-me', authMiddleware, legalUser.getCurrentUser)
+    // .get('/physical-me', authMiddleware, physicalUser.getCurrentUser)
 
 
 export default router;
