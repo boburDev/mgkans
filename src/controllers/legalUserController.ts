@@ -36,7 +36,20 @@ export const loginUser = async (req: Request, res: Response) => {
     const { email, phone, password } = req.body;
 
     try {
-        const user = await LegalUser.findOne({ $or: [{ email }, { phone }] });
+
+        let user
+        if (email) {
+            user = await LegalUser.findOne({ email });
+        } else {
+            user = await LegalUser.findOne({ phone });
+        }
+
+        if (!user) {
+            res.status(400).json({ message: `User not found` });
+            return
+        }
+
+        // const user = await LegalUser.findOne({ $or: [{ email }, { phone }] });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             res.status(400).json({ message: `Invalid ${email ? 'email' : 'phone'} or password` });
             return
