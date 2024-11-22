@@ -9,7 +9,7 @@ interface ISubCategory extends Document {
 const SubCategorySchema = new Schema<ISubCategory>(
     {
         name: { type: String, required: true },
-        order: { type: Number, required: true },
+        order: { type: Number, required: true, default: 1 },
         categoryId: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     },
     { timestamps: true }

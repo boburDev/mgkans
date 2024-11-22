@@ -11,7 +11,9 @@ const storage: StorageEngine = multer.diskStorage({
 
             if (file.fieldname == 'photoFile') {
                 uploadPath += '/category'
-            }else {
+            } else if (file.fieldname == 'photos') {
+                uploadPath += '/products'
+            } else {
                 throw new Error("Invalid Type or fieldName");
             }
 
@@ -34,16 +36,17 @@ const storage: StorageEngine = multer.diskStorage({
     },
 });
 
-export const uploadExcel = multer({
+export const uploadPhoto = multer({
     storage: storage,
     fileFilter: (req, file: Express.Multer.File, cb: FileFilterCallback) => {
         try {
             const extname = path.extname(file.originalname).toLowerCase()
-            const photoCon = photo.includes(extname) && file.fieldname == 'photoFile'
+            const photoCon = photo.includes(extname) && ['photoFile', 'photos'].includes(file.fieldname)
+            
             if (photoCon) {
                 cb(null, true);
             } else {
-                cb(new Error('Error: Excel or Photo Files Only!'));
+                cb(new Error('Error: Photo Files Only!'));
             }
         } catch (error) {
             console.log(error);

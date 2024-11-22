@@ -1,7 +1,6 @@
 import express from 'express';
 import * as legalUser from '../controllers/legalUserController';
 import * as physicalUser from '../controllers/physicalUserController';
-import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
