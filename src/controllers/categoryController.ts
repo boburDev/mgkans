@@ -35,7 +35,7 @@ export const createCategory = async (req: Request, res: Response) => {
 
 export const getAllSubCategory = async (req: Request, res: Response) => {
     try {
-        const subCategory = await SubCategory.find().select("name order");
+        const subCategory = await SubCategory.find().select("name order categoryId");
         res.status(201).json({ categories: subCategory });
     } catch (error) {
         res.status(500).json({ message: 'Error get subcategory', error });
