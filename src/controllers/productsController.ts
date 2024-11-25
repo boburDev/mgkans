@@ -93,7 +93,7 @@ export const getSingleProduct = async (req: Request, res: Response) => {
       .populate({
         path: "subCategoryId",
         select: "name order", // Select only the fields you want from SubCategory
-        model: SubCategoryModel,
+        model: SubCategory,
       })
       .exec();
 
