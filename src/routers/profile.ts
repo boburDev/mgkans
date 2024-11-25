@@ -6,7 +6,7 @@ const router = express.Router();
 
 router
     .get('/', authMiddleware, profile.getCurrentUser)
-    .post('/update', authMiddleware, profile.getCurrentUser)
+    .post('/update', authMiddleware, profile.updateUser)
 
 
 export default router;

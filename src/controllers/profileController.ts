@@ -36,29 +36,26 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
     try {
-
         const { id, updateData } = req.body;
-
         if (!id || !updateData) {
             res.status(400).json({ message: 'Missing required fields: id, or updateData' });
             return
         }
 
         let updatedUser;
-
-
+        
         if (req.user.isLegal) {
             updatedUser = await legalUser.findByIdAndUpdate(
                 id,
                 { $set: updateData },
                 { new: true, runValidators: true }
-            );
+            ).select('-password');
         } else {
             updatedUser = await physicalUser.findByIdAndUpdate(
                 id,
                 { $set: updateData },
                 { new: true, runValidators: true }
-            );
+            ).select('-password');
         }
 
         if (!updatedUser) {
@@ -66,8 +63,9 @@ export const updateUser = async (req: Request, res: Response) => {
             return
         }
 
-        res.json({ data: updatedUser });
+        res.json({ data: updatedUser, error: false, message: 'User updated successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error updating user', error });
     }
 };
+
