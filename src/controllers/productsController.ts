@@ -60,6 +60,7 @@ export const getProducts = async (req: Request, res: Response) => {
                         products: {
                             $push: {
                                 path: "$path",
+                                name: "$name",
                                 definition: "$definition",
                                 subCategoryId: "$subCategoryId",
                                 productId: "$_id",
