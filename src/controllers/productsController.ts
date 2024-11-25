@@ -84,6 +84,48 @@ export const getProducts = async (req: Request, res: Response) => {
 
 const uploadPhotos = uploadPhoto.array('photos', 5);
 
+export const getSingleProduct = async (req: Request, res: Response) => {
+    try {
+    const { id } = req.body; // Get product ID from request parameters
+
+    // Find the product by its ID and populate related subcategory details
+    const product = await ProductModel.findById(id)
+      .populate({
+        path: "subCategoryId",
+        select: "name order", // Select only the fields you want from SubCategory
+        model: SubCategoryModel,
+      })
+      .exec();
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Find all pictures associated with the product
+    const pictures = await ProductPictureModel.find({ productId: id }).select("path");
+
+    // Prepare the response
+    const response = {
+      id: product._id,
+      name: product.name,
+      definition: product.definition,
+      price: product.price,
+      rate: product.rate,
+      count: product.count,
+      sale: product.sale,
+      hashtag: product.hashtag,
+      path: product.path,
+      subCategory: product.subCategoryId, // Populated subcategory details
+      pictures, // List of associated product pictures
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).json({ message: "Error fetching product", error });
+  }
+}
+
 export const createProduct = async (req: Request, res: Response) => {
     try {
         uploadPhotos(req, res, async (err)=>{
