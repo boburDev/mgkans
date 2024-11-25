@@ -7,6 +7,8 @@ import SubCategory from '../models/sub-category';
 import mongoose from 'mongoose';
 import User from '../types/user';
 import { verify } from '../utils/jwt';
+import fs from "fs";
+import path from "path";
 
 export const getProducts = async (req: Request, res: Response) => {
     try {
@@ -82,8 +84,6 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 };
 
-const uploadPhotos = uploadPhoto.array('photos', 5);
-
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
     const { id } = req.params;
@@ -125,49 +125,101 @@ export const getSingleProduct = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
     try {
-        uploadPhotos(req, res, async (err)=>{
-            if (err instanceof multer.MulterError) {
-                res.status(400).json({ error: err.message });
-                return
-            } else if (err) {
-                res.status(400).json({ error: err.message });
-                return
-            }
+        const files = req.files as Express.Multer.File[];
+        if (!files || !files.length) {
+            res.status(400).json({ error: "No files were uploaded." });
+            return
+        }
 
-            if (!req.files) {
-                res.status(400).json({ error: 'No files were uploaded.' });
-                return
-            }
-            const files: any = req.files
-            
-            const newProduct = new ProductModel({
-                name: req.body.name,
-                definition: req.body.definition,
-                path: files.length ? (files[0].destination.split('./public')[1] + '/' + files[0].filename) : '',
-                price: req.body.price,
-                rate: req.body.rate,
-                sale: req.body.sale || 0,
-                hashtag: req.body.hashtag || [],
-                subCategoryId: req.body.subCategoryId,
+        const newProduct = new ProductModel({
+            name: req.body.name,
+            definition: req.body.definition,
+            path: files[0].destination.split('./public')[1] + '/' + files[0].filename,
+            price: req.body.price,
+            rate: req.body.rate,
+            sale: req.body.sale || 0,
+            hashtag: req.body.hashtag || [],
+            subCategoryId: req.body.subCategoryId,
+        });
+
+        const product = await newProduct.save();
+
+        for (const file of files) {
+            const newPicture = new ProductPictureModel({
+                productId: product._id,
+                path: `${file.destination.split('./public')[1]}/${file.filename}`,
             });
+            await newPicture.save();
+        }
 
-            const product = await newProduct.save();
-            
-            for (const i of files) {
-                const newPicture = new ProductPictureModel({
-                    productId: product._id,
-                    path: i.destination.split('./public')[1] + '/' + i.filename,
-                });
-
-                await newPicture.save();
-            }
-           
-            res.status(200).json({
-                message: 'Product created successfully',
-                product,
-            });
-        })
+        res.status(200).json({
+            message: "Product created successfully",
+            product,
+        });
     } catch (error) {
+        console.error("Error creating product:", error);
         res.status(500).json({ message: 'Error creating category', error });
+    }
+};
+
+export const updateProduct = async (req: Request, res: Response) => {
+    try {
+        const { productId } = req.body;
+
+        const product = await ProductModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found." });
+        }
+
+        const updatedProduct = await ProductModel.findByIdAndUpdate(
+            productId,
+            {
+                name: req.body.name || product.name,
+                definition: req.body.definition || product.definition,
+                price: req.body.price || product.price,
+                rate: req.body.rate || product.rate,
+                sale: req.body.sale || product.sale,
+                hashtag: req.body.hashtag || product.hashtag,
+                subCategoryId: req.body.subCategoryId || product.subCategoryId
+            },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: "Product updated successfully",
+            product: updatedProduct
+        });
+    } catch (error) {
+        console.error("Error updating product:", error);
+        res.status(500).json({ message: "Error updating product", error });
+    }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.body;
+
+        const product = await ProductModel.findById(id);
+        if (!product) {
+            res.status(404).json({ message: "Product not found." });
+            return
+        }
+
+        const pictures = await ProductPictureModel.find({ id });
+
+        pictures.forEach((picture) => {
+            const filePath = path.join(__dirname, "../../public", picture.path);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        });
+
+        await ProductPictureModel.deleteMany({ id });
+        await ProductModel.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "Product and associated images deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({ message: "Failed to delete product.", error });
     }
 };
