@@ -86,13 +86,11 @@ const uploadPhotos = uploadPhoto.array('photos', 5);
 
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
-    const { id } = req.params; // Get product ID from request parameters
-
-    // Find the product by its ID and populate related subcategory details
+    const { id } = req.params;
     const product = await ProductModel.findById(id)
       .populate({
         path: "subCategoryId",
-        select: "name order", // Select only the fields you want from SubCategory
+        select: "name order",
         model: SubCategory,
       })
       .exec();
@@ -102,10 +100,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
       return
     }
 
-    // Find all pictures associated with the product
     const pictures = await ProductPictureModel.find({ productId: id }).select("path");
 
-    // Prepare the response
     const response = {
       id: product._id,
       name: product.name,
@@ -116,8 +112,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
       sale: product.sale,
       hashtag: product.hashtag,
       path: product.path,
-      subCategory: product.subCategoryId, // Populated subcategory details
-      pictures, // List of associated product pictures
+      subCategory: product.subCategoryId,
+      pictures,
     };
 
     res.status(200).json(response);
@@ -147,7 +143,7 @@ export const createProduct = async (req: Request, res: Response) => {
             const newProduct = new ProductModel({
                 name: req.body.name,
                 definition: req.body.definition,
-                path: files.length ? (files[0].destination.split('./')[1] + '/' + files[0].filename) : '',
+                path: files.length ? (files[0].destination.split('./public')[1] + '/' + files[0].filename) : '',
                 price: req.body.price,
                 rate: req.body.rate,
                 sale: req.body.sale || 0,
@@ -160,7 +156,7 @@ export const createProduct = async (req: Request, res: Response) => {
             for (const i of files) {
                 const newPicture = new ProductPictureModel({
                     productId: product._id,
-                    path: i.destination.split('./')[1] + '/' + i.filename,
+                    path: i.destination.split('./public')[1] + '/' + i.filename,
                 });
 
                 await newPicture.save();
