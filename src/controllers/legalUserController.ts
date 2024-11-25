@@ -4,7 +4,6 @@ import LegalUser from '../models/legal-user';
 import { generateToken } from '../utils/jwt';
 
 
-// Register a new user
 export const registerUser = async (req: Request, res: Response) => {
     const { name, email, phone, password, company_name, pnfl } = req.body;
 
