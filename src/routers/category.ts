@@ -10,6 +10,7 @@ router
     .post('/update', uploadPhoto.single('photoFile'), category.updateCategory)
     .post('/delete', category.deleteCategory)
     .get('/all-subcategory', category.getAllSubCategory)
+    .post('/create-subcategory', category.createSubCategory)
     .post('/update-subcategory', category.updateSubCategory)
     .post('/delete-subcategory', category.deleteSubCategory)
 
