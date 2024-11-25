@@ -86,7 +86,7 @@ const uploadPhotos = uploadPhoto.array('photos', 5);
 
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
-    const { id } = req.body; // Get product ID from request parameters
+    const { id } = req.params; // Get product ID from request parameters
 
     // Find the product by its ID and populate related subcategory details
     const product = await ProductModel.findById(id)
