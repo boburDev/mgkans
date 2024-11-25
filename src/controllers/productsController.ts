@@ -98,7 +98,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
       .exec();
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      res.status(404).json({ message: "Product not found" });
+      return
     }
 
     // Find all pictures associated with the product
