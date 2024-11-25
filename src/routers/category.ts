@@ -6,9 +6,12 @@ const router = express.Router();
 
 router
     .get('/all', category.getAllCategory)
-    .get('/all-subcategory', category.getAllSubCategory)
     .post('/create', uploadPhoto.single('photoFile'), category.createCategory)
-    .post('/create-subcategory', category.createSubCategory)
+    .post('/update', uploadPhoto.single('photoFile'), category.updateCategory)
+    .post('/delete', category.deleteCategory)
+    .get('/all-subcategory', category.getAllSubCategory)
+    .post('/update-subcategory', category.updateSubCategory)
+    .post('/delete-subcategory', category.deleteSubCategory)
 
 
 export default router;

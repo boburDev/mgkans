@@ -40,7 +40,8 @@ export const updateUser = async (req: Request, res: Response) => {
         const { id, updateData } = req.body;
 
         if (!id || !updateData) {
-            return res.status(400).json({ message: 'Missing required fields: id, or updateData' });
+            res.status(400).json({ message: 'Missing required fields: id, or updateData' });
+            return
         }
 
         let updatedUser;
