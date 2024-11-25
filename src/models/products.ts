@@ -56,5 +56,6 @@ const productCommentSchema: Schema = new Schema({
 const ProductCommentModel = mongoose.model<ProductComment>('ProductComment', productCommentSchema);
 
 
+
 export default ProductModel;
 export { ProductPictureModel, ProductCommentModel };
