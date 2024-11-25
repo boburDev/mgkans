@@ -6,6 +6,7 @@ const router = express.Router();
 
 router
     .get('/:name/all', products.getProducts)
+    .get('/signle/:id', products.getSingleProduct)
     .post('/create', products.createProduct)
 
 
