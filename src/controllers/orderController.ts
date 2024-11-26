@@ -5,7 +5,7 @@ export const createOrder = async (req: Request, res: Response) => {
     try {
         // { productId: string; quantity: number; price: number }
         const { userId, items } = req.body;
-        console.log(userId, items)
+        console.log(userId, items, req.body)
         const totalAmount = items.reduce((sum: any, item: any) => sum + item.quantity * item.price, 0);
 
         const order = new OrderModel({
