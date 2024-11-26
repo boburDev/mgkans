@@ -16,6 +16,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
         res.json({ data: order, error: false, message: null })
     } catch (error) {
+        console.log(error)
         res.status(500).json({ message: 'Error creating category', error });
     }
 }
