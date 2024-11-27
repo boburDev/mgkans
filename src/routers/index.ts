@@ -5,6 +5,7 @@ import categoryRouter from "./category";
 import productRouter from "./products";
 import favourRouter from "./favour";
 import orderRouter from "./orders";
+import adsRouter from "./advertise";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.use('/category', categoryRouter)
 router.use('/product', productRouter)
 router.use('/favour', favourRouter)
 router.use('/order', orderRouter)
+router.use('/ads', adsRouter)
 
 export default router

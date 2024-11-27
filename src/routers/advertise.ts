@@ -1,9 +1,10 @@
-// import express from 'express';
-// import * as advertise from '../controllers/advertise';
+import express from 'express';
+import * as advertise from '../controllers/advertise';
 
-// const router = express.Router();
+const router = express.Router();
 
-// router
-//     .post('/legal-register', advertise.registerUser)
+router
+    .get('/all', advertise.getAds)
+    .post('/create', advertise.createAd)
 
-// export default router;
+export default router;
