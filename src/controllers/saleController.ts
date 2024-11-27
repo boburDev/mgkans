@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path'; 
 import { Request, Response } from 'express';
 import SaleModel from '../models/sale';
 
@@ -27,3 +29,26 @@ export const createSale = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error getting sale', error });
     }
 }
+
+export const deleteSale = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const ad = await SaleModel.findById(id);
+        if (!ad) {
+            res.status(404).json({ message: 'Sale not found' });
+            return
+        }
+
+        const filePath = path.join(__dirname, '../../public', ad.path);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        await SaleModel.findByIdAndDelete(id);
+
+        res.status(200).json({ message: 'Sale and file deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting sale:', error);
+        res.status(500).json({ message: 'Internal server error', error });
+    }
+};
