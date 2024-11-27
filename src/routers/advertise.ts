@@ -6,6 +6,7 @@ const router = express.Router();
 
 router
     .get('/all', advertise.getAds)
+    .get('/single-ads/:name', advertise.getAdsByCategory)
     .post('/create', uploadPhoto.single('ads'), advertise.createAd)
     .post('/delete/:id', advertise.deleteAdvertising)
 

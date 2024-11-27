@@ -2,6 +2,24 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from 'express';
 import AdvertisingModel from '../models/advertise';
+import Category from '../models/category';
+
+export const getAdsByCategory = async (req: Request, res: Response) => {
+    try {
+        const catalog = await Category.findOne({ path: `/${req.params.name}` });
+        let ads
+        if (catalog) {
+            ads = await AdvertisingModel.find({ categoryId: catalog._id }).populate('categoryId', 'name');
+        } else {
+            ads = await AdvertisingModel.find({ categoryId: "" }).populate('categoryId', 'name');
+        }
+
+        res.status(201).json({ data: ads });
+    } catch (error) {
+        res.status(500).json({ message: 'Error getting Advertise', error });
+    }
+}
+
 
 export const getAds = async (req: Request, res: Response) => {
     try {
