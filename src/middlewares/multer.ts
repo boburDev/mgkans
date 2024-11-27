@@ -15,6 +15,8 @@ const storage: StorageEngine = multer.diskStorage({
                 uploadPath += '/products'
             } else if (file.fieldname == 'ads') {
                 uploadPath += '/ads'
+            } else if (file.fieldname == 'sale') {
+                uploadPath += '/ads'
             } else {
                 throw new Error("Invalid Type or fieldName");
             }

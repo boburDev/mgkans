@@ -1,5 +1,5 @@
 import express from 'express';
-import * as advertise from '../controllers/advertise';
+import * as advertise from '../controllers/advertiseController';
 import { uploadPhoto } from '../middlewares/multer'
 
 const router = express.Router();
