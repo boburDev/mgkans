@@ -16,6 +16,8 @@ export const validateJWT = async (req: Request, res: Response, next: NextFunctio
     }
 
     try {
+        console.log(req.headers)
+        
         let decoded: Admin | null = verifyAdmin(String(token));
         console.log(decoded);
         if (!decoded) throw new Error("Invalid token!");
