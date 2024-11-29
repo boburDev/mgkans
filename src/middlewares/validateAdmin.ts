@@ -15,16 +15,11 @@ export const validateJWT = async (req: Request, res: Response, next: NextFunctio
         return
     }
 
-    try {
-        console.log(token)
-        
+    try {        
         let decoded: Admin | null = verifyAdmin(String(token));
-        console.log(decoded);
         if (!decoded) throw new Error("Invalid token!");
         
         const user = await User.findById(decoded.id);
-        console.log(user)
-        
         if (!user) throw new Error('Admin not found!');
 
         req.admin = decoded
