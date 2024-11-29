@@ -7,7 +7,7 @@ import Category from '../models/category';
 export const getAdsByCategory = async (req: Request, res: Response) => {
     try {
         console.log(req.params.name);
-        const catalog = await Category.findOne({ path: `/${req.params.name}` });
+        const catalog = await Category.findOne({ route: `/${req.params.name}` });
         console.log(catalog);
         
         let ads
