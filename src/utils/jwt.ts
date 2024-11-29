@@ -10,7 +10,7 @@ export const generateToken = (id: string, isLegal: boolean = false): string => {
 
 export function verify(token: string): User | null {
     try {
-        const decoded: User = jwt.verify(token, secretKeyAdmin) as User;
+        const decoded: User = jwt.verify(token, secretKey) as User;
         return decoded;
     } catch (error) {
         return null;
