@@ -12,7 +12,7 @@ export const getAdsByCategory = async (req: Request, res: Response) => {
         if (catalog) {
             ads = await AdvertisingModel.find({ categoryId: catalog._id }).populate('categoryId', 'name');
         } else {
-            ads = await AdvertisingModel.find({ categoryId: "" }).populate('categoryId', 'name');
+            ads = await AdvertisingModel.find({ categoryId: null }).populate('categoryId', 'name');
         }
         console.log(ads)
         
@@ -39,7 +39,7 @@ export const createAd = async (req: Request, res: Response) => {
         const newPath = file.destination.split('./public')[1] + '/' + file.filename
         const data = {
             url: req.body.url,
-            categoryId: req.body.categoryId,
+            categoryId: req.body.categoryId || null,
             path: newPath
         }
 
