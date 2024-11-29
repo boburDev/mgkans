@@ -8,6 +8,7 @@ const router = express.Router();
 router
     .get('/:name/all', products.getProducts)
     .get('/signle/:id', products.getSingleProduct)
+    .get('/by-id/:subCategoryId', products.getProductsBySubCategory)
     .post('/create', uploadPhoto.array('photos', 5), products.createProduct)
     .post('/delete', products.deleteProduct);
 

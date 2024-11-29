@@ -10,6 +10,78 @@ import { verify } from '../utils/jwt';
 import fs from "fs";
 import path from "path";
 
+
+export const getProductsBySubCategory = async (req: Request, res: Response) => {
+    try {
+        const { subCategoryId } = req.params;
+        const subCategory = await SubCategory.find({ _id: subCategoryId });
+        if (!subCategory) throw new Error("subCategory not found");
+
+        const token = req.headers.authorization?.split(' ')[1];
+        let decoded: User | null = verify(String(token));
+
+        let isAdmin: any = decoded ? decoded.isLegal : false
+        
+        if (subCategory.length) {
+
+            const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
+
+            const products = await ProductModel.aggregate([
+                {
+                    $match: {
+                        subCategoryId: { $in: subCategoryArray },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "subcategories",
+                        localField: "subCategoryId",
+                        foreignField: "_id",
+                        as: "subCategory",
+                    },
+                },
+                {
+                    $unwind: "$subCategory",
+                },
+                {
+                    $addFields: {
+                        sortIndex: {
+                            $indexOfArray: [subCategoryArray, "$subCategoryId"],
+                        },
+                    },
+                },
+                {
+                    $sort: {
+                        sortIndex: 1,
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$subCategory.name",
+                        products: {
+                            $push: {
+                                path: "$path",
+                                name: "$name",
+                                definition: "$definition",
+                                subCategoryId: "$subCategoryId",
+                                productId: "$_id",
+                                ...(isAdmin && { price: "$price" }),
+                            },
+                        },
+                    },
+                },
+            ]);
+
+            res.status(201).json({ products: products[0]?.products });
+        } else {
+            res.status(201).json({ products: [], message: "subcategory not found" });
+        }
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
 export const getProducts = async (req: Request, res: Response) => {
     try {
         const catalog = await Category.findOne({ route: `/${req.params.name}` });
@@ -78,7 +150,7 @@ export const getProducts = async (req: Request, res: Response) => {
 
             res.status(201).json({ products: formattedProducts });
         } else {
-            res.status(201).json({ products: subCategory });
+            res.status(201).json({ products: [], message: "subcategory not found" });
         }
     } catch (error) {
         res.status(500).json({ message: 'Error creating user', error });
