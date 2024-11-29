@@ -16,7 +16,7 @@ export const validateJWT = async (req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        console.log(req.headers)
+        console.log(token)
         
         let decoded: Admin | null = verifyAdmin(String(token));
         console.log(decoded);
