@@ -14,7 +14,6 @@ export const getAdsByCategory = async (req: Request, res: Response) => {
         } else {
             ads = await AdvertisingModel.find({ categoryId: null }).populate('categoryId', 'name');
         }
-        console.log(ads)
         
         res.status(201).json({ data: ads });
     } catch (error) {
