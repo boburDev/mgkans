@@ -1,5 +1,6 @@
 import express from 'express'
 import authRouter from "./auth";
+import adminRouter from "./admin";
 import profileRouter from "./profile";
 import categoryRouter from "./category";
 import productRouter from "./products";
@@ -11,6 +12,7 @@ import saleRouter from "./sale";
 const router = express.Router();
 
 router.use('/auth', authRouter)
+router.use('/admin', adminRouter)
 router.use('/profile', profileRouter)
 router.use('/category', categoryRouter)
 router.use('/product', productRouter)
