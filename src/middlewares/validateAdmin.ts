@@ -22,7 +22,7 @@ export const validateJWT = async (req: Request, res: Response, next: NextFunctio
         const user = await User.findById(decoded.id);
         if (!user) throw new Error('Admin not found!');
 
-        req.user = decoded
+        req.admin = decoded
         next();
     } catch (err) {
         res.status(400).json({ message: 'Token not verified!', error: true });
