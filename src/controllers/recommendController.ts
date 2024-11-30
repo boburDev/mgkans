@@ -59,26 +59,14 @@ export const createRecommendation = async (req: Request, res: Response) => {
 export const deleteRecommendation = async (req: Request, res: Response) => {
     try {
         const { id } = req.body;
-        console.log(id);
         
         if (!id) {
             res.status(400).json({ message: 'Recommendation ID is required.' });
             return
         }
 
-        const deletedRecommendation = await RecommendModel.findByIdAndDelete({ _id: id });
-        console.log(deletedRecommendation);
-            
-
-        if (!deletedRecommendation) {
-            res.status(404).json({ message: 'Recommendation not found.' });
-            return
-        }
-
-        res.status(200).json({
-            message: 'Recommendation deleted successfully.',
-            recommendation: deletedRecommendation,
-        });
+        await RecommendModel.findByIdAndDelete(id);
+        res.status(200).json({ message: 'Recommendation deleted successfully.' });
     } catch (error) {
         console.error('Error deleting recommendation:', error);
         res.status(500).json({ message: 'Failed to delete recommendation.', error });
