@@ -59,7 +59,8 @@ export const createRecommendation = async (req: Request, res: Response) => {
 export const deleteRecommendation = async (req: Request, res: Response) => {
     try {
         const { id } = req.body;
-
+        console.log(id);
+        
         if (!id) {
             res.status(400).json({ message: 'Recommendation ID is required.' });
             return

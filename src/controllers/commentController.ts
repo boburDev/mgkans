@@ -80,7 +80,7 @@ export const getCommentsByProduct = async (req: Request, res: Response) => {
 
 export const deleteProductComment = async (req: Request, res: Response) => {
     try {
-        const { commentId } = req.params;
+        const { commentId } = req.body;
 
         if (!commentId) {
             res.status(400).json({ message: "Comment ID is required." });
