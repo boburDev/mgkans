@@ -87,7 +87,7 @@ export const deleteProductComment = async (req: Request, res: Response) => {
             return
         }
 
-        const deletedComment = await ProductCommentModel.findByIdAndDelete({ _id: commentId });
+        const deletedComment = await ProductCommentModel.findByIdAndDelete(commentId);
 
         if (!deletedComment) {
             res.status(404).json({ message: "Comment not found." });
