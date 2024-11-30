@@ -65,7 +65,7 @@ export const deleteRecommendation = async (req: Request, res: Response) => {
             return
         }
 
-        const deletedRecommendation = await RecommendModel.findByIdAndDelete(id);
+        const deletedRecommendation = await RecommendModel.findByIdAndDelete({ _id: id });
 
         if (!deletedRecommendation) {
             res.status(404).json({ message: 'Recommendation not found.' });
