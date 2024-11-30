@@ -8,6 +8,8 @@ import favourRouter from "./favour";
 import orderRouter from "./orders";
 import adsRouter from "./advertise";
 import saleRouter from "./sale";
+import recommendRouter from "./recommend";
+import commentRouter from "./comments";
 
 const router = express.Router();
 
@@ -20,5 +22,7 @@ router.use('/favour', favourRouter)
 router.use('/order', orderRouter)
 router.use('/ads', adsRouter)
 router.use('/sale', saleRouter)
+router.use('/recommend', recommendRouter)
+router.use('/comment', commentRouter)
 
 export default router

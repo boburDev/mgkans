@@ -83,6 +83,26 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 };
 
+export const findSimilarProducts = async (req: Request, res: Response) => {
+    try {
+        const { hashtag } = req.body;
+
+        if (!hashtag || !Array.isArray(hashtag) || hashtag.length === 0) {
+            res.status(200).json({ products: [] });
+            return
+        }
+
+        const products = await ProductModel.find({
+            hashtag: { $in: hashtag },
+        }).select("name definition price path hashtag");
+
+        res.status(200).json({ products });
+    } catch (error) {
+        console.error("Error finding similar products:", error);
+        res.status(500).json({ message: "Failed to retrieve similar products.", error });
+    }
+};
+
 export const getProductsBySubCategory = async (req: Request, res: Response) => {
     try {
         const { subCategoryId } = req.params;

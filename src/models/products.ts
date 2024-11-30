@@ -41,6 +41,8 @@ const ProductPictureModel = mongoose.model<ProductPicture>('ProductPicture', pro
 
 interface ProductComment extends Document {
     productId: mongoose.Types.ObjectId;
+    legalId?: mongoose.Types.ObjectId;
+    physicalId?: mongoose.Types.ObjectId;
     userName: string;
     comment: string;
     date: Date;
@@ -48,8 +50,10 @@ interface ProductComment extends Document {
 
 const productCommentSchema: Schema = new Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    userName: { type: String, required: true },
+    legalId: { type: mongoose.Schema.Types.ObjectId, ref: 'LUser', required: false },
+    physicalId: { type: mongoose.Schema.Types.ObjectId, ref: 'PUser', required: false },
     comment: { type: String, required: true },
+    userName: { type: String, required: true },
     date: { type: Date, required: true, default: Date.now },
 });
 
