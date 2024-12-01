@@ -67,8 +67,10 @@ export const getAllCommentsByUser = async (req: Request, res: Response) => {
 
         if (isLegal) {
             comments = await ProductCommentModel.find({ legalId: userId }).sort({ date: -1 });
+            console.log(comments)
         } else {
             comments = await ProductCommentModel.find({ physicalId: userId }).sort({ date: -1 });
+            console.log(comments)
         }
 
         if (!comments.length) {
