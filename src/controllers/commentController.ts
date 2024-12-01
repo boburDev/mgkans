@@ -55,6 +55,8 @@ export const getAllComments = async (req: Request, res: Response) => {
     }
 };
 
+
+
 export const getAllCommentsByUser = async (req: Request, res: Response) => {
     try {
 
@@ -67,10 +69,22 @@ export const getAllCommentsByUser = async (req: Request, res: Response) => {
 
         if (isLegal) {
             comments = await ProductCommentModel.find({ legalId: userId }).sort({ date: -1 });
-            console.log(comments)
+            comments = comments.map(item => ({
+                commentId: item._id,
+                productId: item.productId,
+                commentBody: item.comment,
+                userId: item.legalId,
+                createdAt: item.date
+            }));
         } else {
             comments = await ProductCommentModel.find({ physicalId: userId }).sort({ date: -1 });
-            console.log(comments)
+            comments = comments.map(item => ({
+                commentId: item._id,
+                productId: item.productId,
+                commentBody: item.comment,
+                userId: item.physicalId,
+                createdAt: item.date
+            }));
         }
 
         if (!comments.length) {
