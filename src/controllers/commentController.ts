@@ -55,6 +55,37 @@ export const getAllComments = async (req: Request, res: Response) => {
     }
 };
 
+export const getAllCommentsByUser = async (req: Request, res: Response) => {
+    try {
+
+        const isLegal = req.user.isLegal;
+        const userId = isLegal
+            ? req.user.userLegal?._id
+            : req.user.userPhysical?._id;
+
+        let comments
+
+        if (isLegal) {
+            comments = await ProductCommentModel.find({ legalId: userId }).sort({ date: -1 });
+        } else {
+            comments = await ProductCommentModel.find({ physicalId: userId }).sort({ date: -1 });
+        }
+
+        if (!comments.length) {
+            res.status(200).json({ comments: [] });
+            return
+        }
+
+        res.status(200).json({ comments });
+    } catch (error) {
+        console.error("Error retrieving comments:", error);
+        res.status(500).json({
+            message: "Failed to retrieve comments.",
+            error,
+        });
+    }
+};
+
 export const getCommentsByProduct = async (req: Request, res: Response) => {
     try {
         const { productId } = req.params;
