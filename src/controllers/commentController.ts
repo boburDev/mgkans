@@ -9,7 +9,6 @@ export const createProductComment = async (req: Request, res: Response) => {
             res.status(400).json({ message: "Product ID and comment are required." });
             return
         }
-
         const isLegal = req.user.isLegal;
         const userName = isLegal
             ? req.user.userLegal?.name
