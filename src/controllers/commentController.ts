@@ -73,6 +73,7 @@ export const getAllCommentsByUser = async (req: Request, res: Response) => {
                 productId: item.productId,
                 commentBody: item.comment,
                 userId: item.legalId,
+                userName: item.userName,
                 createdAt: item.date
             }));
         } else {
@@ -82,6 +83,7 @@ export const getAllCommentsByUser = async (req: Request, res: Response) => {
                 productId: item.productId,
                 commentBody: item.comment,
                 userId: item.physicalId,
+                userName: item.userName,
                 createdAt: item.date
             }));
         }
