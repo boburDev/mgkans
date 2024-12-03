@@ -8,7 +8,7 @@ const router = express.Router();
 
 router
     .get('/all', validateJWT, bonusSystem.getAllBonusSystems)
-    .get('/bonus', authMiddleware, bonusSystem.getBonusSystemByToken)
+    .get('/personal', authMiddleware, bonusSystem.getBonusSystemByToken)
     .post('/create', authMiddleware, uploadPhoto.single('bonus'), bonusSystem.createBonusSystem)
     .post('/delete/:id', validateJWT, bonusSystem.deleteBonusSystem)
 
