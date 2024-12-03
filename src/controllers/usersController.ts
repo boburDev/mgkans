@@ -36,21 +36,27 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
 
         const query = statusNumber === 4 ? {} : { status: statusNumber };
         let users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
-        users = users.map((user:any) => {
-            let newUser = { ...user }
+        let newUsers = users.map((user:any) => {
+            let newUser = {
+                id: user._id,
+                name: user.name,
+                phone: user.phone,
+                status: user.status,
+                point: user.point,
+                company_name: user.company_name,
+                pnfl: user.pnfl,
+                email: user.email
+            }
             if (user.status == 1) {
-                console.log(1, user);
                 newUser.status = 'request';
             } else if (user.status == 2) {
                 newUser.status = 'active';
             } else if (user.status == 3) {
                 newUser.status = 'inactive';
             }
-            console.log(2, newUser)
-            
-            return user;
+            return newUser;
         });
-        res.status(200).json({ message: 'Legal users fetched successfully', data: users });
+        res.status(200).json({ message: 'Legal users fetched successfully', data: newUsers });
     } catch (error) {
         console.error('Error fetching legal users by status:', error);
         res.status(500).json({ message: 'An error occurred while fetching legal users', error });
