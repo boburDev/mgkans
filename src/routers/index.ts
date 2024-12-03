@@ -10,6 +10,7 @@ import adsRouter from "./advertise";
 import saleRouter from "./sale";
 import recommendRouter from "./recommend";
 import commentRouter from "./comments";
+import userRouter from "./users";
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.use('/ads', adsRouter)
 router.use('/sale', saleRouter)
 router.use('/recommend', recommendRouter)
 router.use('/comment', commentRouter)
+router.use('/user', userRouter)
 
 export default router
