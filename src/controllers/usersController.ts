@@ -46,6 +46,8 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
             } else if (user.status == 3) {
                 user.status = 'inactive';
             }
+            console.log(2, user)
+            
             return user;
         });
         res.status(200).json({ message: 'Legal users fetched successfully', data: users });
