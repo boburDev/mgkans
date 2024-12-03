@@ -36,12 +36,14 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
 
         const query = statusNumber === 4 ? {} : { status: statusNumber };
         let users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
+        console.log(users)
+        
         users = users.map((user:any) => {
-            if (user.status === 1) {
+            if (user.status == 1) {
                 user.status = 'request';
-            } else if (user.status === 2) {
+            } else if (user.status == 2) {
                 user.status = 'active';
-            } else if (user.status === 3) {
+            } else if (user.status == 3) {
                 user.status = 'inactive';
             }
             return user;
