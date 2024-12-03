@@ -4,7 +4,7 @@ import legalUser from '../models/legalUser';
 
 export const getUsersByStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { status } = req.query;
+        const { status } = req.params;
 
         if (!status) {
             res.status(400).json({ message: 'Status is required' });
@@ -14,7 +14,7 @@ export const getUsersByStatus = async (req: Request, res: Response): Promise<voi
         let users;
         if (status === 'physical') {
             users = await physicalUser.find();
-        } else {
+        } else if (status === 'legal') {
             users = await legalUser.find();
         }
 
