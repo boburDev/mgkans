@@ -90,7 +90,7 @@ export const updateLegalUserStatus = async (req: Request, res: Response): Promis
 
         const updatedUser = await legalUser.findByIdAndUpdate(
             userId,
-            { status },
+            { status: statusNumber },
             { new: true, runValidators: true }
         );
 

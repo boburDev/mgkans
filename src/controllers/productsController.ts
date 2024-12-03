@@ -15,9 +15,9 @@ export const getProducts = async (req: Request, res: Response) => {
         const subCategory = await SubCategory.find({ categoryId: catalog._id });
 
         const token = req.headers.authorization?.split(' ')[1];
-        let decoded: User | null = verify(String(token));
+        let decoded: any | null = verify(String(token));
         
-        let isAdmin: any = decoded ? decoded.isLegal : false
+        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
 
         if (subCategory.length) {
 
@@ -110,9 +110,9 @@ export const getProductsBySubCategory = async (req: Request, res: Response) => {
         if (!subCategory) throw new Error("subCategory not found");
 
         const token = req.headers.authorization?.split(' ')[1];
-        let decoded: User | null = verify(String(token));
+        let decoded: any | null = verify(String(token));
 
-        let isAdmin: any = decoded ? decoded.isLegal : false
+        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
 
         if (subCategory.length) {
 
