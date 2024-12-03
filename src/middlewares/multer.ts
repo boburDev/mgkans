@@ -47,7 +47,7 @@ export const uploadPhoto = multer({
             // console.log("File mimetype:", file.mimetype);
             // console.log("File originalname:", file.originalname);
             const isValidType = photo.includes(file.mimetype);
-            const isValidField = ['photoFile', 'photos', 'sale', 'ads'].includes(file.fieldname);
+            const isValidField = ['photoFile', 'photos', 'sale', 'ads', 'bonus'].includes(file.fieldname);
 
             if (isValidType && isValidField) {
                 cb(null, true);
