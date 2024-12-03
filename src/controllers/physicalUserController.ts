@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import PhysicalUser from '../models/physical-user';
+import PhysicalUser from '../models/physicalUser';
 import { generateToken } from '../utils/jwt';
 
 

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import physicalUser from '../models/physical-user';
-import legalUser from '../models/legal-user';
+import physicalUser from '../models/physicalUser';
+import legalUser from '../models/legalUser';
 
 export const getUsersByStatus = async (req: Request, res: Response): Promise<void> => {
     try {
