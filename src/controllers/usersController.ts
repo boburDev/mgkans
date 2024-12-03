@@ -4,7 +4,7 @@ import legalUser from '../models/legalUser';
 
 export const getPhysicalUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-        const users = await physicalUser.find().select('_id name email phone point -password');
+        const users = await physicalUser.find().select('_id name email phone point');
         res.status(200).json({ message: 'Physical users fetched successfully', data: users });
     } catch (error) {
         console.error('Error fetching physical users:', error);
@@ -35,7 +35,7 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
         }
 
         const query = statusNumber === 4 ? {} : { status: statusNumber };
-        const users = await legalUser.find(query).select('_id name email phone point status company_name pnfl -password');
+        const users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
 
         res.status(200).json({ message: 'Legal users fetched successfully', data: users });
     } catch (error) {
