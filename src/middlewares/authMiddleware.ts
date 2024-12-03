@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { verify } from '../utils/jwt';
-import legalUser, { LUser } from '../models/legal-user';
-import physicalUser, { PUser } from '../models/physical-user';
+import legalUser, { LUser } from '../models/legalUser';
+import physicalUser, { PUser } from '../models/physicalUser';
 import User from '../types/user';
 
 declare module 'express-serve-static-core' {
