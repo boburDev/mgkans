@@ -5,6 +5,6 @@ import { validateJWT } from '../middlewares/validateAdmin';
 const router = express.Router();
 
 router
-    .get('/all', validateJWT, users.getUsersByStatus)
+    .get('/:status', validateJWT, users.getUsersByStatus)
 
 export default router;
