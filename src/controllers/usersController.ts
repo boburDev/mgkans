@@ -35,8 +35,17 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
         }
 
         const query = statusNumber === 4 ? {} : { status: statusNumber };
-        const users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
-
+        let users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
+        users = users.map((user:any) => {
+            if (user.status === 1) {
+                user.status = 'request';
+            } else if (user.status === 2) {
+                user.status = 'active';
+            } else if (user.status === 3) {
+                user.status = 'inactive';
+            }
+            return user;
+        });
         res.status(200).json({ message: 'Legal users fetched successfully', data: users });
     } catch (error) {
         console.error('Error fetching legal users by status:', error);
