@@ -6,5 +6,6 @@ const router = express.Router();
 
 router
     .get('/:status', validateJWT, users.getUsersByStatus)
+    .get('/requests/:status', validateJWT, users.getUsersByStatus)
 
 export default router;
