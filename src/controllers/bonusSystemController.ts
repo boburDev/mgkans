@@ -20,7 +20,7 @@ export const createBonusSystem = async (req: Request, res: Response): Promise<vo
         });
 
         await bonusEntry.save();
-        res.status(201).json({ message: 'Created successfully', data: bonusEntry });
+        res.status(201).json({ message: 'Created successfully', data: { path: newPath, date: bonusEntry.time } });
     } catch (error) {
         console.error('Error creating bonus system entry:', error);
         res.status(500).json({ message: 'Error creating bonus system entry', error });
@@ -40,18 +40,13 @@ export const getAllBonusSystems = async (_req: Request, res: Response): Promise<
     }
 };
 
-export const getBonusSystemById = async (req: Request, res: Response): Promise<void> => {
+export const getBonusSystemByToken = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
-
-        const bonusEntry = await BonusSystem.findById(id)
-            .populate('legalId')
-            .populate('physicalId');
-
-        if (!bonusEntry) {
-            res.status(404).json({ message: 'Bonus system entry not found' });
-            return;
-        }
+        const isLegal = req.user.isLegal;
+        let query = isLegal ? { legalId: req.user.userLegal?._id } : { physicalId: req.user.userPhysical?._id }
+        const bonusEntry = await BonusSystem.find(query)
+        console.log(bonusEntry);
+        
 
         res.status(200).json({ message: 'Bonus system entry fetched successfully', data: bonusEntry });
     } catch (error) {
