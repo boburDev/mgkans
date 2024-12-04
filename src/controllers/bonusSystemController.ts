@@ -41,15 +41,13 @@ export const createBonusSystem = async (req: Request, res: Response): Promise<vo
 
 export const getAllBonusSystems = async (req: Request, res: Response): Promise<void> => {
     try {
-
-        
         const status = req.query.status;
         
-        if (typeof status != 'boolean') {
+        if (typeof Boolean(status) != 'boolean') {
             res.status(400).json({ error: "Status not found." });
             return
         }
-        const matchQuery = status
+        const matchQuery = status == 'true'
             ? { legalId: { $exists: true, $ne: null } }
             : { physicalId: { $exists: true, $ne: null } };
        
