@@ -18,5 +18,20 @@ const bonusSystemSchema: Schema = new Schema({
 });
 
 const BonusSystem = mongoose.model<BonusSystem>('BonusSystem', bonusSystemSchema);
+
+
+interface BonusSystemPicture extends Document {
+    bonusSystemId: mongoose.Types.ObjectId;
+    path: string;
+}
+
+const BonusSystemPictureSchema: Schema = new Schema({
+    bonusSystemId: { type: mongoose.Schema.Types.ObjectId, ref: 'BonusSystem', required: true },
+    path: { type: String, required: true },
+});
+
+const BonusSystemPictureModel = mongoose.model<BonusSystemPicture>('BonusSystemPicture', BonusSystemPictureSchema);
+
+
 export default BonusSystem;
-export { BonusSystem };
+export { BonusSystem, BonusSystemPictureModel };

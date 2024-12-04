@@ -9,7 +9,6 @@ const router = express.Router();
 router
     .get('/all', validateJWT, bonusSystem.getAllBonusSystems)
     .get('/personal', authMiddleware, bonusSystem.getBonusSystemByToken)
-    .post('/create', authMiddleware, uploadPhoto.single('bonus'), bonusSystem.createBonusSystem)
+    .post('/create', authMiddleware, uploadPhoto.array('bonus', 3), bonusSystem.createBonusSystem)
     .post('/delete/:id', validateJWT, bonusSystem.deleteBonusSystem)
-
 export default router;
