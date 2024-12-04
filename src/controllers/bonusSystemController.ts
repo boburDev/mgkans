@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
-import BonusSystem from '../models/bonusSystem';
+import BonusSystem, { BonusSystemPictureModel } from '../models/bonusSystem';
 
 export const createBonusSystem = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.file) throw new Error('File is failed')
-        let file = req.file
-        const newPath = file.destination.split('./public')[1] + '/' + file.filename
+        const files = req.files as Express.Multer.File[];
+        if (!files || !files.length) {
+            res.status(400).json({ error: "No files were uploaded." });
+            return
+        }
+        const newPath = files[0].destination.split('./public')[1] + '/' + files[0].filename
 
         const isLegal = req.user.isLegal;
         const userName = isLegal
@@ -19,8 +22,17 @@ export const createBonusSystem = async (req: Request, res: Response): Promise<vo
             userName
         });
 
-        await bonusEntry.save();
-        res.status(201).json({ message: 'Created successfully', data: { path: newPath, date: bonusEntry.time } });
+        const bonusSystem = await bonusEntry.save();
+
+        for (const file of files) {
+            const newPicture = new BonusSystemPictureModel({
+                bonusSystemId: bonusSystem._id,
+                path: `${file.destination.split('./public')[1]}/${file.filename}`,
+            });
+            await newPicture.save();
+        }
+
+        res.status(201).json({ message: 'Created successfully', data: bonusSystem });
     } catch (error) {
         console.error('Error creating bonus system entry:', error);
         res.status(500).json({ message: 'Error creating bonus system entry', error });
