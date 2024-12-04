@@ -39,12 +39,41 @@ export const createBonusSystem = async (req: Request, res: Response): Promise<vo
     }
 };
 
-export const getAllBonusSystems = async (_req: Request, res: Response): Promise<void> => {
+export const getAllBonusSystems = async (req: Request, res: Response): Promise<void> => {
     try {
-        const bonusEntries = await BonusSystem.find()
-            .populate('legalId')
-            .populate('physicalId');
 
+        
+        const status = req.query.status;
+        
+        if (typeof status != 'boolean') {
+            res.status(400).json({ error: "Status not found." });
+            return
+        }
+        const matchQuery = status
+            ? { legalId: { $exists: true, $ne: null } }
+            : { physicalId: { $exists: true, $ne: null } };
+       
+        const bonusEntries = await BonusSystem.aggregate([
+            {
+                $match: matchQuery, 
+            },
+            {
+                $lookup: {
+                    from: 'bonussystempictures', 
+                    localField: '_id',            
+                    foreignField: 'bonusSystemId',
+                    as: 'pictures',               
+                },
+            },
+            {
+                $project: {
+                    path: 1,
+                    userName: 1,
+                    time: 1,
+                    pictures: 1,
+                },
+            },
+        ]);
         res.status(200).json({ message: 'Bonus system entries fetched successfully', data: bonusEntries });
     } catch (error) {
         console.error('Error fetching bonus system entries:', error);
@@ -56,10 +85,27 @@ export const getBonusSystemByToken = async (req: Request, res: Response): Promis
     try {
         const isLegal = req.user.isLegal;
         let query = isLegal ? { legalId: req.user.userLegal?._id } : { physicalId: req.user.userPhysical?._id }
-        const bonusEntry = await BonusSystem.find(query)
-        console.log(bonusEntry);
-        
-
+        const bonusEntry = await BonusSystem.aggregate([
+            {
+                $match: query,
+            },
+            {
+                $lookup: {
+                    from: 'bonussystempictures',
+                    localField: '_id',
+                    foreignField: 'bonusSystemId',
+                    as: 'pictures',
+                },
+            },
+            {
+                $project: {
+                    path: 1,
+                    userName: 1,
+                    time: 1,
+                    pictures: 1,
+                },
+            },
+        ]);
         res.status(200).json({ message: 'Bonus system entry fetched successfully', data: bonusEntry });
     } catch (error) {
         console.error('Error fetching bonus system entry:', error);
