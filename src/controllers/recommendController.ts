@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import RecommendModel from '../models/recommend';
+import { verify } from '../utils/jwt';
 
 export const getAllRecommendations = async (_req: Request, res: Response) => {
     try {
@@ -26,8 +27,13 @@ export const getRecommendationsByCategory = async (req: Request, res: Response) 
             return
         }
 
+        const token = req.headers.authorization?.split(' ')[1];
+        let decoded: any | null = verify(String(token));
+        
+        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+
         const recommendations = await RecommendModel.find({ categoryId })
-            .populate('productId', 'name price path')
+            .populate('productId', isAdmin ? 'name price path' : 'name path')
             .populate('categoryId', 'name');
 
         res.status(200).json({

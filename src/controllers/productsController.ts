@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import ProductModel, { ProductPictureModel } from '../models/products';
+import ProductModel, { ProductPictureModel, ProductTagModel } from '../models/products';
 import Category from '../models/category';
 import SubCategory from '../models/sub-category';
 import mongoose from 'mongoose';
-import User from '../types/user';
 import { verify } from '../utils/jwt';
 import fs from "fs";
 import path from "path";
@@ -213,6 +212,50 @@ export const getSingleProduct = async (req: Request, res: Response) => {
   }
 }
 
+export const searchProductsByName = async (req: Request, res: Response) => {
+    try {
+        const { name } = req.query;
+        
+        if (!name || typeof name !== "string") {
+            res.status(400).json({ error: "Please provide a valid product name to search." });
+            return
+        }
+
+        const token = req.headers.authorization?.split(' ')[1];
+        let decoded: any | null = verify(String(token));
+
+        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+
+        
+        const projection: any = {};
+        if (isAdmin != true) {
+            projection.price = 0; 
+        }
+
+        
+        const products = await ProductModel.find(
+            {
+                name: { $regex: name, $options: "i" }, 
+            },
+            projection 
+        );
+
+        
+        if (!products.length) {
+            res.status(404).json({ message: "No products found with the given name." });
+            return
+        }
+
+        
+        res.status(200).json({
+            message: "Products retrieved successfully",
+            products,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error searching products by name", error });
+    }
+};
+
 export const createProduct = async (req: Request, res: Response) => {
     try {
         const files = req.files as Express.Multer.File[];
@@ -313,3 +356,38 @@ export const deleteProduct = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Failed to delete product.", error });
     }
 };
+
+export const createTag = async (req: Request, res: Response) => {
+    try {
+        const { name } = req.body;
+
+        const newTag = new ProductTagModel({ name });
+        await newTag.save();
+
+        res.status(201).json({ message: 'Tag created successfully', tag: newTag });
+    } catch (error) {
+        res.status(400).json({ error: error });
+    }
+}
+
+export const getTags = async (req: Request, res: Response) => {
+    try {
+        const tags = await ProductTagModel.find();
+        res.status(200).json(tags);
+    } catch (error) {
+        res.status(400).json({ error: error });
+    }
+}
+
+export const deleteTag = async (req: Request, res: Response) => {
+    try {
+        const deletedTag = await ProductTagModel.findByIdAndDelete(req.params.id);
+        if (!deletedTag) {
+            res.status(404).json({ message: 'Tag not found' });
+            return
+        }
+        res.status(200).json({ message: 'Tag deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error });
+    }
+}

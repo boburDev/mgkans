@@ -59,7 +59,11 @@ const productCommentSchema: Schema = new Schema({
 
 const ProductCommentModel = mongoose.model<ProductComment>('ProductComment', productCommentSchema);
 
+const tagSchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true, }
+});
 
+const ProductTagModel =  mongoose.model('Tag', tagSchema);
 
 export default ProductModel;
-export { ProductPictureModel, ProductCommentModel };
+export { ProductPictureModel, ProductCommentModel, ProductTagModel };
