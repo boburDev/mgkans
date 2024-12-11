@@ -10,6 +10,11 @@ declare module 'express-serve-static-core' {
     }
 }
 
+const secretKey = process.env.SECRET_KEY
+console.log(secretKey);
+
+
+
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(' ')[1];
 
