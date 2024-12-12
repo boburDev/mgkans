@@ -6,8 +6,8 @@ import { validateJWT } from '../middlewares/validateAdmin';
 const router = express.Router();
 
 router
-    .get('/:name/all', products.getProducts)
-    .get('/signle/:id', products.getSingleProduct)
+    .get('/all', products.getProducts)
+    .get('/single/:id', products.getSingleProduct)
     .get('/search', products.searchProductsByName)
     .get('/similar-products', products.findSimilarProducts)
     .get('/by-id/:subCategoryId', products.getProductsBySubCategory)
