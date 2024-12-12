@@ -7,7 +7,7 @@ const router = express.Router();
 
 router
     .get('/all', category.getAllCategory)   
-    .get('/:id', category.getProductGroupById)
+    .get('/single/:id', category.getProductGroupById)
     .post('/create', validateJWT, uploadPhoto.single('photoFile'), category.createCategory)
     .post('/update', validateJWT, uploadPhoto.single('photoFile'), category.updateCategory)
     .post('/delete', validateJWT, category.deleteCategory)

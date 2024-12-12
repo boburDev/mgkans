@@ -24,19 +24,10 @@ export const getProducts = async (req: Request, res: Response) => {
             }
         );
 
-        // Step 3: Extract and transform product data
-        const products = response.data.rows.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            path: product.meta.href,
-            ...(product.salePrices && {
-                price: product.salePrices[0]?.value / 100, // Convert price to a readable format
-            }),
-        }));
+        
 
         // Step 4: Respond with the formatted product data
-        res.status(200).json({ products });
+        res.status(200).json({ data: response.data });
     } catch (error:any) {
         // Handle and log errors
         res.status(500).json({
@@ -157,41 +148,11 @@ export const getSingleProduct = async (req: Request, res: Response) => {
 
         const product:any = productResponse.data;
 
-        // Step 3: Fetch related images (if available)
-        const picturesResponse:any = await axios.get(
-            product.images.meta.href,
-            {
-                headers: {
-                    Authorization: `Basic ${accessToken}`,
-                    'Accept-Encoding': 'gzip',
-                },
-            }
-        );
-
-        const pictures = picturesResponse.data.rows.map((picture: any) => ({
-            path: picture.meta.href,
-        }));
-
         // Step 4: Format the response
-        const response = {
-            id: product.id,
-            name: product.name,
-            definition: product.description || '',
-            price: product.salePrices?.[0]?.value
-                ? product.salePrices[0].value / 100
-                : null, // Convert price from cent-based format
-            vat: product.vatEnabled ? product.vat : null,
-            rate: product.rate || null,
-            count: product.stock || null,
-            sale: product.sale || null,
-            hashtag: product.hashtag || null,
-            path: product.meta.href,
-            subCategory: product.group?.meta?.href || null,
-            pictures,
-        };
+        
 
         // Step 5: Send the response
-        res.status(200).json(response);
+        res.status(200).json({data: product});
     } catch (error:any) {
         console.error("Error fetching product:", error);
         res.status(500).json({
@@ -234,26 +195,11 @@ export const searchProductsByName = async (req: Request, res: Response) => {
             res.status(404).json({ message: "No products found with the given name." });
             return;
         }
-
-        // Step 4: Format the response
-        const formattedProducts = products.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description || '',
-            price: product.salePrices?.[0]?.value ? product.salePrices[0].value / 100 : null, // Convert to user-friendly format
-            vat: product.vatEnabled ? product.vat : null,
-            rate: product.rate || null,
-            count: product.stock || null,
-            sale: product.sale || null,
-            path: product.meta.href,
-            subCategory: product.group?.meta?.href || null,
-            images: product.images ? product.images.rows : [], // Assuming images are in `images.rows`
-        }));
-
+        
         // Step 5: Send the response
         res.status(200).json({
             message: "Products retrieved successfully",
-            products: formattedProducts,
+            data: products,
         });
     } catch (error:any) {
         console.error("Error searching products by name:", error);

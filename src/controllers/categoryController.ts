@@ -35,19 +35,7 @@ export const getAllCategory = async (req: Request, res: Response) => {
             }
         );
 
-        // Process the response
-        const productFolders = productFolderResponse.data.rows.map((folder: any) => ({
-            id: folder.id,
-            name: folder.name,
-            code: folder.code,
-            externalCode: folder.externalCode,
-            archived: folder.archived,
-            vatEnabled: folder.vatEnabled,
-            useParentVat: folder.useParentVat,
-            updated: folder.updated,
-        }));
-
-        res.status(200).json({ productFolders });
+        res.status(200).json({ data: productFolderResponse.data });
     } catch (error: any) {
         console.error('Error fetching product folders:', error.message);
         if (error.response) {
@@ -253,18 +241,7 @@ export const getProductGroupById: any = async (req: Request, res: Response) => {
             }
         );
 
-        const productGroup = {
-            id: productGroupResponse.data.id,
-            name: productGroupResponse.data.name,
-            code: productGroupResponse.data.code,
-            externalCode: productGroupResponse.data.externalCode,
-            archived: productGroupResponse.data.archived,
-            vatEnabled: productGroupResponse.data.vatEnabled,
-            useParentVat: productGroupResponse.data.useParentVat,
-            updated: productGroupResponse.data.updated,
-        };
-
-        res.status(200).json({ productGroup });
+        res.status(200).json({ data: productGroupResponse.data });
     } catch (error: any) {
         console.error('Error fetching product group by ID:', error.message);
         if (error.response) {
