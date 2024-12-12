@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 
-function encodeCredentials(login: string, password: string): string {
+function encodeCredentials(login: any, password: any): string {
     return Buffer.from(`${login}:${password}`).toString('base64');
 }
 
@@ -33,5 +33,4 @@ export const getAccessToken = async (req: Request, res: Response): Promise<void>
     }
 };
 
-
-console.log(encodeCredentials('admin@shakhtj','311207'))
+export default encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
