@@ -207,41 +207,57 @@ export const searchProductsByName = async (req: Request, res: Response) => {
         
         if (!name || typeof name !== "string") {
             res.status(400).json({ error: "Please provide a valid product name to search." });
-            return
+            return;
         }
 
-        const token = req.headers.authorization?.split(' ')[1];
-        let decoded: any | null = verify(String(token));
+        // Step 1: Get the access token using `encodeCredentials`
+        const accessToken = encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
 
-        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
-
-        
-        const projection: any = {};
-        if (isAdmin != true) {
-            projection.price = 0; 
-        }
-
-        
-        const products = await ProductModel.find(
+        // Step 2: Perform search in the Moysklad API
+        const productsResponse:any = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/product`,
             {
-                name: { $regex: name, $options: "i" }, 
-            },
-            projection 
+                params: {
+                    search: name, // Use the `search` query parameter to search by name
+                },
+                headers: {
+                    Authorization: `Basic ${accessToken}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
         );
 
-        
+        const products = productsResponse.data.rows;
+
+        // Step 3: If no products are found
         if (!products.length) {
             res.status(404).json({ message: "No products found with the given name." });
-            return
+            return;
         }
 
-        
+        // Step 4: Format the response
+        const formattedProducts = products.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            price: product.salePrices?.[0]?.value ? product.salePrices[0].value / 100 : null, // Convert to user-friendly format
+            vat: product.vatEnabled ? product.vat : null,
+            rate: product.rate || null,
+            count: product.stock || null,
+            sale: product.sale || null,
+            path: product.meta.href,
+            subCategory: product.group?.meta?.href || null,
+            images: product.images ? product.images.rows : [], // Assuming images are in `images.rows`
+        }));
+
+        // Step 5: Send the response
         res.status(200).json({
             message: "Products retrieved successfully",
-            products,
+            products: formattedProducts,
         });
-    } catch (error) {
-        res.status(500).json({ message: "Error searching products by name", error });
+    } catch (error:any) {
+        console.error("Error searching products by name:", error);
+        res.status(500).json({ message: "Error searching products by name", error: error.response?.data || error.message });
     }
 };
 
