@@ -1,16 +1,14 @@
 import axios from 'axios';
-import { Request, Response } from 'express';
+import 'dotenv/config';
 
 function encodeCredentials(login: any, password: any): string {
     return Buffer.from(`${login}:${password}`).toString('base64');
 }
 
-export const getAccessToken = async (req: Request, res: Response): Promise<void> => {
-    const login: string = 'admin@shakhtj';
-    const password: string = '311207';
+export const accessToken = async() => {
     const apiUrl: string = 'https://api.moysklad.ru/api/remap/1.2/security/token';
 
-    const encodedCredentials: string = encodeCredentials(login, password);
+    const encodedCredentials: string = encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
 
     try {
         const response: any = await axios.post(apiUrl, null, {
@@ -20,17 +18,8 @@ export const getAccessToken = async (req: Request, res: Response): Promise<void>
             },
         });
 
-        res.status(200).json({ access_token: response?.data?.access_token });
+        return response?.data?.access_token;
     } catch (error: any) {
         console.error('Error fetching access token:', error.message);
-        if (error.response) {
-            res.status(error.response.status).json({
-                message: error.response.data || 'Error fetching access token',
-            });
-        } else {
-            res.status(500).json({ message: 'Internal server error' });
-        }
     }
 };
-
-export default encodeCredentials;

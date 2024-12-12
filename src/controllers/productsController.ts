@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import ProductModel, { ProductPictureModel, ProductTagModel } from '../models/products';
 import Category from '../models/category';
-import encodeCredentials from '../utils/getAccessToken'
+import {accessToken} from '../utils/getAccessToken'
 import SubCategory from '../models/sub-category';
 import mongoose from 'mongoose';
 import { verify } from '../utils/jwt';
@@ -11,31 +11,64 @@ import axios from 'axios';
 
 export const getProducts = async (req: Request, res: Response) => {
     try {
-        // Step 1: Get the access token using `encodeCredentials`
-        const accessToken = encodeCredentials(process.env.LOGIN,process.env.PASSWORD);
+        const { subcategoryId } = req.query;
 
-        // Step 2: Fetch products from the Moysklad API
-        const response:any = await axios.get(
+        // Ensure the subcategoryId is a string
+        const subcategoryString = typeof subcategoryId === 'string' ? subcategoryId : null;
+
+        // Fetch the access token
+        const token = await accessToken();
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return;
+        }
+
+        // Fetch all products
+        const response: any = await axios.get(
             'https://api.moysklad.ru/api/remap/1.2/entity/product',
             {
                 headers: {
-                    Authorization: `Basic ${accessToken}`,
+                    Authorization: `Bearer ${token}`,
+                    'Accept-Encoding': 'gzip',
                 },
             }
         );
 
-        
+        // Apply filtering manually by subcategoryId
+        let products = response.data.rows;
 
-        // Step 4: Respond with the formatted product data
-        res.status(200).json({ data: response.data });
-    } catch (error:any) {
+        // If subcategoryId is provided, filter by productFolder meta.href
+        if (subcategoryString) {
+            products = products.filter(
+                (product: any) =>
+                    product.productFolder?.meta?.href &&
+                    product.productFolder.meta.href.includes(subcategoryString)
+            );
+        }
+
+        // Format the response
+        const formattedProducts = products.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        }));
+
+        // Respond with the filtered products
+        res.status(200).json({ data: formattedProducts });
+    } catch (error: any) {
         // Handle and log errors
+        console.error('Error fetching products:', error.message);
         res.status(500).json({
             message: 'Failed to fetch products',
             error: error.response?.data || error.message,
         });
     }
 };
+
 
 export const findSimilarProducts = async (req: Request, res: Response) => {
     try {
@@ -131,29 +164,34 @@ export const getProductsBySubCategory = async (req: Request, res: Response) => {
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const token = await accessToken();
 
-        // Step 1: Get the access token using `encodeCredentials`
-        const accessToken = encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
-
-        // Step 2: Fetch the product details from Moysklad API
         const productResponse = await axios.get(
             `https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`,
             {
                 headers: {
-                    Authorization: `Basic ${accessToken}`,
+                    Authorization: `Bearer ${token}`,
                     'Accept-Encoding': 'gzip',
                 },
             }
         );
 
-        const product:any = productResponse.data;
+        const product: any = productResponse.data;
 
-        // Step 4: Format the response
-        
+        // Format the response to only include relevant product fields
+        const formattedProduct = {
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        };
 
-        // Step 5: Send the response
-        res.status(200).json({data: product});
-    } catch (error:any) {
+        // Send the formatted product response
+        res.status(200).json({ data: formattedProduct });
+    } catch (error: any) {
         console.error("Error fetching product:", error);
         res.status(500).json({
             message: "Error fetching product",
@@ -162,27 +200,25 @@ export const getSingleProduct = async (req: Request, res: Response) => {
     }
 };
 
+
 export const searchProductsByName = async (req: Request, res: Response) => {
     try {
         const { name } = req.query;
+        const token = await accessToken();
         
         if (!name || typeof name !== "string") {
             res.status(400).json({ error: "Please provide a valid product name to search." });
             return;
         }
 
-        // Step 1: Get the access token using `encodeCredentials`
-        const accessToken = encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
-
-        // Step 2: Perform search in the Moysklad API
-        const productsResponse:any = await axios.get(
+        const productsResponse: any = await axios.get(
             `https://api.moysklad.ru/api/remap/1.2/entity/product`,
             {
                 params: {
                     search: name, // Use the `search` query parameter to search by name
                 },
                 headers: {
-                    Authorization: `Basic ${accessToken}`,
+                    Authorization: `Bearer ${token}`,
                     'Accept-Encoding': 'gzip',
                 },
             }
@@ -190,22 +226,37 @@ export const searchProductsByName = async (req: Request, res: Response) => {
 
         const products = productsResponse.data.rows;
 
-        // Step 3: If no products are found
+        // If no products are found
         if (!products.length) {
             res.status(404).json({ message: "No products found with the given name." });
             return;
         }
-        
-        // Step 5: Send the response
+
+        // Format the product response to only include relevant fields
+        const formattedProducts = products.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        }));
+
+        // Send the formatted products response
         res.status(200).json({
             message: "Products retrieved successfully",
-            data: products,
+            data: formattedProducts,
         });
-    } catch (error:any) {
+    } catch (error: any) {
         console.error("Error searching products by name:", error);
-        res.status(500).json({ message: "Error searching products by name", error: error.response?.data || error.message });
+        res.status(500).json({
+            message: "Error searching products by name",
+            error: error.response?.data || error.message,
+        });
     }
 };
+
 
 export const createProduct = async (req: Request, res: Response) => {
     try {

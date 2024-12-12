@@ -4,38 +4,57 @@ import { Request, RequestHandler, Response } from 'express';
 import Category from '../models/category';
 import SubCategory from '../models/sub-category';
 import axios from 'axios';
-import encodeCredentials from '../utils/getAccessToken'
+import {accessToken} from '../utils/getAccessToken'
 
 export const getAllCategory = async (req: Request, res: Response) => {
     try {
         // Fetch the access token
-        const login: string = 'admin@shakhtj';
-        const password: string = '311207';
-        const tokenResponse: any = await axios.post(
-            'https://api.moysklad.ru/api/remap/1.2/security/token',
-            null,
-            {
-                headers: {
-                    Authorization: `Basic ${encodeCredentials(login, password)}`,
-                    'Accept-Encoding': 'gzip',
-                },
-            }
-        );
-
-        const accessToken: string = tokenResponse.data.access_token;
+        const token = await accessToken();
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return;
+        }
 
         // Fetch product folders using the access token
-        const productFolderResponse:any = await axios.get(
+        const productFolderResponse: any = await axios.get(
             'https://api.moysklad.ru/api/remap/1.2/entity/productfolder',
             {
                 headers: {
-                    Authorization: `Bearer ${accessToken}`,
+                    Authorization: `Bearer ${token}`,
                     'Accept-Encoding': 'gzip',
                 },
             }
         );
 
-        res.status(200).json({ data: productFolderResponse.data });
+        // Process the response to structure it as requested
+        const categories = productFolderResponse.data.rows.reduce((result: any, folder: any) => {
+            const pathName = folder.pathName;
+
+            // Skip entries without a valid pathName
+            if (!pathName) {
+                return result;
+            }
+
+            if (!result[pathName]) {
+                result[pathName] = {
+                    name: pathName,
+                    subcategories: []
+                };
+            }
+
+            result[pathName].subcategories.push({
+                id: folder.id,
+                updated: folder.updated,
+                name: folder.name,
+                code: folder.code || '',
+                externalCode: folder.externalCode || '',
+                archived: folder.archived || false,
+            });
+
+            return result;
+        }, {});
+
+        res.status(200).json({ data: categories });
     } catch (error: any) {
         console.error('Error fetching product folders:', error.message);
         if (error.response) {
@@ -47,6 +66,9 @@ export const getAllCategory = async (req: Request, res: Response) => {
         }
     }
 };
+
+
+
 
 export const createCategory = async (req: Request, res: Response) => {
     try {
@@ -205,51 +227,5 @@ export const deleteSubCategory = async (req: Request, res: Response) => {
         res.json({ data: deletedSubCategory, error: false, message: 'Subcategory deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting subcategory', error });
-    }
-};
-
-export const getProductGroupById: any = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-
-        if (!id) {
-            return res.status(400).json({ message: 'Product group ID is required' });
-        }
-
-        const login = 'admin@shakhtj';
-        const password = '311207';
-        const tokenResponse: any = await axios.post(
-            'https://api.moysklad.ru/api/remap/1.2/security/token',
-            null,
-            {
-                headers: {
-                    Authorization: `Basic ${encodeCredentials(login, password)}`,
-                    'Accept-Encoding': 'gzip',
-                },
-            }
-        );
-
-        const accessToken = tokenResponse.data.access_token;
-
-        const productGroupResponse: any = await axios.get(
-            `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${id}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Accept-Encoding': 'gzip',
-                },
-            }
-        );
-
-        res.status(200).json({ data: productGroupResponse.data });
-    } catch (error: any) {
-        console.error('Error fetching product group by ID:', error.message);
-        if (error.response) {
-            res.status(error.response.status).json({
-                message: error.response.data || 'Error fetching product group by ID',
-            });
-        } else {
-            res.status(500).json({ message: 'Internal server error', error: error.message });
-        }
     }
 };
