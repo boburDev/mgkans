@@ -67,9 +67,6 @@ export const getAllCategory = async (req: Request, res: Response) => {
     }
 };
 
-
-
-
 export const createCategory = async (req: Request, res: Response) => {
     try {
         if (!req.file) throw new Error('File is failed')
