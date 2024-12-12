@@ -1,15 +1,62 @@
 import fs from 'fs';
 import path from 'path'; 
-import { Request, Response } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import Category from '../models/category';
 import SubCategory from '../models/sub-category';
+import axios from 'axios';
+import encodeCredentials from '../utils/getAccessToken'
 
 export const getAllCategory = async (req: Request, res: Response) => {
     try {
-        const catalog = await Category.find().select("title path route colour order").sort({ order: 1 });
-        res.status(201).json({ catalog });
-    } catch (error) {
-        res.status(500).json({ message: 'Error get category', error });
+        // Fetch the access token
+        const login: string = 'admin@shakhtj';
+        const password: string = '311207';
+        const tokenResponse: any = await axios.post(
+            'https://api.moysklad.ru/api/remap/1.2/security/token',
+            null,
+            {
+                headers: {
+                    Authorization: `Basic ${encodeCredentials(login, password)}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        const accessToken: string = tokenResponse.data.access_token;
+
+        // Fetch product folders using the access token
+        const productFolderResponse:any = await axios.get(
+            'https://api.moysklad.ru/api/remap/1.2/entity/productfolder',
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        // Process the response
+        const productFolders = productFolderResponse.data.rows.map((folder: any) => ({
+            id: folder.id,
+            name: folder.name,
+            code: folder.code,
+            externalCode: folder.externalCode,
+            archived: folder.archived,
+            vatEnabled: folder.vatEnabled,
+            useParentVat: folder.useParentVat,
+            updated: folder.updated,
+        }));
+
+        res.status(200).json({ productFolders });
+    } catch (error: any) {
+        console.error('Error fetching product folders:', error.message);
+        if (error.response) {
+            res.status(error.response.status).json({
+                message: error.response.data || 'Error fetching product folders',
+            });
+        } else {
+            res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
     }
 };
 
@@ -170,5 +217,62 @@ export const deleteSubCategory = async (req: Request, res: Response) => {
         res.json({ data: deletedSubCategory, error: false, message: 'Subcategory deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting subcategory', error });
+    }
+};
+
+export const getProductGroupById: any = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ message: 'Product group ID is required' });
+        }
+
+        const login = 'admin@shakhtj';
+        const password = '311207';
+        const tokenResponse: any = await axios.post(
+            'https://api.moysklad.ru/api/remap/1.2/security/token',
+            null,
+            {
+                headers: {
+                    Authorization: `Basic ${encodeCredentials(login, password)}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        const accessToken = tokenResponse.data.access_token;
+
+        const productGroupResponse: any = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        const productGroup = {
+            id: productGroupResponse.data.id,
+            name: productGroupResponse.data.name,
+            code: productGroupResponse.data.code,
+            externalCode: productGroupResponse.data.externalCode,
+            archived: productGroupResponse.data.archived,
+            vatEnabled: productGroupResponse.data.vatEnabled,
+            useParentVat: productGroupResponse.data.useParentVat,
+            updated: productGroupResponse.data.updated,
+        };
+
+        res.status(200).json({ productGroup });
+    } catch (error: any) {
+        console.error('Error fetching product group by ID:', error.message);
+        if (error.response) {
+            res.status(error.response.status).json({
+                message: error.response.data || 'Error fetching product group by ID',
+            });
+        } else {
+            res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
     }
 };

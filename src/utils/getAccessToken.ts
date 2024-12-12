@@ -33,4 +33,4 @@ export const getAccessToken = async (req: Request, res: Response): Promise<void>
     }
 };
 
-export default encodeCredentials(process.env.LOGIN, process.env.PASSWORD);
+export default encodeCredentials;

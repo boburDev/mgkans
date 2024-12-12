@@ -82,6 +82,8 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 };
 
+
+
 export const findSimilarProducts = async (req: Request, res: Response) => {
     try {
         const { hashtag } = req.body;
