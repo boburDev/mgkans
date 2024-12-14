@@ -59,9 +59,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                         images = imageDetails.map((image: any) => ({
                             title: image.title,
                             filename: image.filename,
-                            downloadHref: image.downloadHref,
-                            miniatureHref: image.miniature?.downloadHref,
-                            tinyHref: image.tiny?.href,
                         }));
                     }
                 }
