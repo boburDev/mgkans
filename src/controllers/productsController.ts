@@ -6,18 +6,24 @@ import SubCategory from '../models/sub-category';
 import mongoose from 'mongoose';
 import { verify } from '../utils/jwt';
 import fs from "fs";
-import path from "path";
+import path, { format } from "path";
 import axios from 'axios';
+import { fetchMetaDetails } from '../utils/fetchMetaDetails';
 
-export const getAllProducts = async (req: Request, res: Response):Promise<any> => {
+export const getAllProducts = async (req: Request, res: Response): Promise<any> => {
     try {
-        // Fetch the access token
+        const { category } = req.query;
+
+        if (!category) {
+            return res.status(400).json({ message: 'Category is required' });
+        }
+
         const token = await accessToken();
+        
         if (!token) {
             return res.status(500).json({ message: 'Failed to fetch access token' });
         }
 
-        // Fetch all products
         const response: any = await axios.get(
             'https://api.moysklad.ru/api/remap/1.2/entity/product',
             {
@@ -27,43 +33,65 @@ export const getAllProducts = async (req: Request, res: Response):Promise<any> =
                 },
             }
         );
-    
-        // Check if rows are present in the response
+
         const products = response.data?.rows || [];
-    
-        if (products.length === 0) {
-            return res.status(200).json({ message: 'No products found.' });
+
+        const groupedProducts: { [key: string]: any[] } = {};
+
+        for (const product of products) {
+            const pathName = product.pathName || '';
+            const [mainCategory, subCategory] = pathName.split('/'); 
+
+            // Only include products matching the `category`
+            if (mainCategory === category) {
+                const subCategoryKey = subCategory || 'Uncategorized';
+
+                // Initialize array for subcategory if it doesn't exist
+                if (!groupedProducts[subCategoryKey]) {
+                    groupedProducts[subCategoryKey] = [];
+                }
+
+                // Fetch images metadata for the product if it has images
+                let images = [];
+                if (product.images?.meta?.href) {
+                    const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
+                    if (imageDetails) {
+                        images = imageDetails.map((image: any) => ({
+                            title: image.title,
+                            filename: image.filename,
+                            downloadHref: image.downloadHref,
+                            miniatureHref: image.miniature?.downloadHref,
+                            tinyHref: image.tiny?.href,
+                        }));
+                    }
+                }
+
+                // Add the product with image details to the relevant subcategory group
+                groupedProducts[subCategoryKey].push({
+                    id: product.id,
+                    name: product.name,
+                    description: product.description || '',
+                    archived: product.archived || false,
+                    images: images, 
+                    buyPrice: product.buyPrice?.value || null,
+                });
+            }
         }
-    
-        // Now safely map over products
-        const formattedProducts = products.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description || '',
-            code: product.code || '',
-            price: product.salePrices?.[0]?.value || 0,
-            archived: product.archived || false,
-            pathName: product.pathName || '',
-            image: product.images?.meta?.href || '', // Add image URL if available
-            minPrice: product.minPrice?.value || 0,  // Add min price if available
-            supplier: product.supplier?.meta?.href || '', // Add supplier info if available
-            attributes: product.attributes?.map((attr: any) => ({
-                name: attr.name,
-                value: attr.value,
-            })) || [],
-            barcodes: product.barcodes || [], // Include barcode info
-        }));
-    
-        // Respond with the formatted products
-        res.status(200).json({ data: formattedProducts });
+
+        // Respond with grouped products
+        res.status(200).json(groupedProducts);
     } catch (error: any) {
-        console.error('Error fetching all products:', error.message);
+        console.error('Error fetching products by category:', error);
         res.status(500).json({
-            message: 'Failed to fetch products',
+            message: 'Failed to fetch products by category',
             error: error.response?.data || error.message,
         });
     }
 };
+
+
+
+
 
 
 export const findSimilarProducts = async (req: Request, res: Response) => {
@@ -86,65 +114,6 @@ export const findSimilarProducts = async (req: Request, res: Response) => {
     }
 };
 
-export const getProductsByCategory = async (req: Request, res: Response):Promise<any> => {
-    try {
-        const { pathName } = req.params;
-
-        if (!pathName || typeof pathName !== "string") {
-            return res.status(400).json({ message: 'Invalid or missing pathName' });
-        }
-
-        // Fetch the access token
-        const token = await accessToken();
-        if (!token) {
-            return res.status(500).json({ message: 'Failed to fetch access token' });
-        }
-
-        // Fetch all products
-        const response: any = await axios.get(
-            'https://api.moysklad.ru/api/remap/1.2/entity/product',
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Accept-Encoding': 'gzip',
-                },
-                params: {
-                    pathName: pathName,  // Filter products by category
-                },
-            }
-        );
-
-        const products = response.data?.rows || [];
-
-        // Format the response to only include relevant product fields
-        const formattedProducts = products.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description || '',
-            code: product.code || '',
-            price: product.salePrices?.[0]?.value || 0,
-            archived: product.archived || false,
-            pathName: product.pathName || '',
-            image: product.images?.meta?.href || '', // Add image URL if available
-            minPrice: product.minPrice?.value || 0,  // Add min price if available
-            supplier: product.supplier?.meta?.href || '', // Add supplier info if available
-            attributes: Array.isArray(product.attributes) ? product.attributes.map((attr: any) => ({
-                name: attr.name,
-                value: attr.value,
-            })) : [],  // Safely handle undefined or non-array attributes
-            barcodes: product.barcodes || [], // Include barcode info
-        }));
-
-        // Respond with the filtered products
-        res.status(200).json({ data: formattedProducts });
-    } catch (error: any) {
-        console.error('Error fetching products by category:', error.message);
-        res.status(500).json({
-            message: 'Failed to fetch products by category',
-            error: error.response?.data || error.message,
-        });
-    }
-};
 
 
 

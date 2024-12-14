@@ -9,13 +9,13 @@ import axios from 'axios';
  */
 export const fetchMetaDetails = async (href: string, token: string): Promise<any> => {
     try {
-        const response = await axios.get(href, {
+        const response:any = await axios.get(href, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
-        return response.data;
+        return response.data.rows;
     } catch (error) {
         console.error(`Error fetching details from ${href}:`, error);
         return null;

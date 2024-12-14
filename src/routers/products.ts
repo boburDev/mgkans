@@ -7,7 +7,6 @@ const router = express.Router();
 
 router
     .get('/all', products.getAllProducts)
-    .get('/by-category/:pathName', products.getProductsByCategory)
     .get('/single/:id', products.getSingleProduct)
     .get('/search', products.searchProductsByName)
     .get('/similar-products', products.findSimilarProducts)
