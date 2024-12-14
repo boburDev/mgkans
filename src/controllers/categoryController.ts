@@ -8,54 +8,27 @@ import {accessToken} from '../utils/getAccessToken'
 
 export const getAllCategory = async (req: Request, res: Response) => {
     try {
-        // Fetch the access token
         const token = await accessToken();
-        if (!token) {
-            res.status(500).json({ message: 'Failed to fetch access token' });
-            return;
-        }
+        
+        const moyskladResponse:any = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/productfolder`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept-Encoding': 'gzip',
+            },
+        });
 
-        // Fetch product folders using the access token
-        const productFolderResponse: any = await axios.get(
-            'https://api.moysklad.ru/api/remap/1.2/entity/productfolder',
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Accept-Encoding': 'gzip',
-                },
-            }
-        );
+        const pathNames = moyskladResponse.data.rows.map((row: any) => row.pathName);
 
-        // Process the response to structure it as requested
-        const categories = productFolderResponse.data.rows.reduce((result: any, folder: any) => {
-            const pathName = folder.pathName;
+        const categories = await Category.find({ title: { $in: pathNames } });
 
-            // Skip entries without a valid pathName
-            if (!pathName) {
-                return result;
-            }
-
-            if (!result[pathName]) {
-                result = {
-                    name: pathName
-                };
-            }
-
-            return result;
-        }, {});
-
-        res.status(200).json({ data: categories });
-    } catch (error: any) {
-        console.error('Error fetching product folders:', error.message);
-        if (error.response) {
-            res.status(error.response.status).json({
-                message: error.response.data || 'Error fetching product folders',
-            });
-        } else {
-            res.status(500).json({ message: 'Internal server error', error: error.message });
-        }
+        res.status(200).json({ categories });
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({ message: 'Error fetching categories', error });
     }
 };
+
 
 export const createCategory = async (req: Request, res: Response) => {
     try {
@@ -73,8 +46,8 @@ export const createCategory = async (req: Request, res: Response) => {
         await newCategory.save();
 
         res.json({ data: newCategory, error: false, message: null })
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating category', error });
+    } catch (error:any) {
+        res.status(500).json({ message: 'Error creating category', error: error.message });
     }
 };
 
