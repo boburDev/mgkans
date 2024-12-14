@@ -36,20 +36,10 @@ export const getAllCategory = async (req: Request, res: Response) => {
             }
 
             if (!result[pathName]) {
-                result[pathName] = {
-                    name: pathName,
-                    subcategories: []
+                result = {
+                    name: pathName
                 };
             }
-
-            result[pathName].subcategories.push({
-                id: folder.id,
-                updated: folder.updated,
-                name: folder.name,
-                code: folder.code || '',
-                externalCode: folder.externalCode || '',
-                archived: folder.archived || false,
-            });
 
             return result;
         }, {});
