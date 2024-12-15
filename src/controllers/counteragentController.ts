@@ -11,9 +11,8 @@ export const getAllCounteragents = async (req: Request, res: Response) => {
     try {
         const { limit = 4, offset = 0 } = req.query;
         const token = await accessToken();
-        let counterpartyId = ''
-        let accountId = ''
-        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${counterpartyId}/accounts/${accountId}`, {
+
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
@@ -62,7 +61,9 @@ export const getSingleCounteragent = async (req: Request, res: Response) => {
         const { id } = req.params;
         const token = await accessToken();
 
-        const response = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${id}`, {
+        let counterpartyId = ''
+        let accountId = ''
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${counterpartyId}/accounts/${accountId}`, {
             headers: {
                 Authorization: `Basic ${encodeCredentials()}`,
                 "Accept-Encoding": "gzip",
