@@ -19,7 +19,6 @@ export const getAllCategory = async (req: Request, res: Response) => {
         });
 
         const pathNames = moyskladResponse.data.rows.map((row: any) => row.pathName);
-
         const categories = await Category.find({ title: { $in: pathNames } });
 
         res.status(200).json({ categories });

@@ -9,10 +9,10 @@ const MOYSKLAD_BASE_URL = 'https://api.moysklad.ru/api/remap/1.2';
  */
 export const getAllCounteragents = async (req: Request, res: Response) => {
     try {
-        const { limit = 10, offset = 0 } = req.query;
+        const { limit = 4, offset = 0 } = req.query;
         const token = await accessToken();
 
-        const response:any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty`, {
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
@@ -23,10 +23,29 @@ export const getAllCounteragents = async (req: Request, res: Response) => {
                 offset: parseInt(offset as string, 10),
             },
         });
+        const data = response.data.rows.map((i: any) => {
+            return {
+                id: i.id,
+                accountId: i.accountId,
+                shared: i.shared,
+                name: i.name,
+                code: i.code,
+                externalCode: i.externalCode,
+                archived: i.archived,
+                companyType: i.companyType,
+                legalTitle: i.legalTitle,
+                legalAddress: i.legalAddress,
+                actualAddressFull: i.actualAddressFull?.comment,
+                inn: i.inn,
+                phone: i.phone,
+                salesAmount: i.salesAmount,
+
+            }
+        })
 
         res.status(200).json({
             totalCounteragents: response.data.meta.size,
-            counteragents: response.data.rows,
+            counteragents: data,
         });
     } catch (error) {
         console.error('Error fetching all counteragents:', error);

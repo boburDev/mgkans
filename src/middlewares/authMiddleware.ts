@@ -10,10 +10,29 @@ declare module 'express-serve-static-core' {
     }
 }
 
-const secretKey = process.env.SECRET_KEY
-console.log(secretKey);
+export async function checkToken(token:string) {
+    let decoded: User | null = verify(String(token));
 
+    if (!decoded) return 'Token not found';
+    let user = {}
+    if (decoded.isLegal) {
+        const userLegal = await legalUser.findById(decoded.id).select('-password');
+        if (!userLegal) throw new Error('User not found!');
+        user = {
+            isLegal: decoded.isLegal,
+            userLegal
+        }
+    } else {
+        const userPhysical = await physicalUser.findById(decoded.id).select('-password');
+        if (!userPhysical) throw new Error('User not found!');
+        user = {
+            isLegal: decoded.isLegal,
+            userPhysical
+        }
+    }
 
+    return user
+}
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(' ')[1];

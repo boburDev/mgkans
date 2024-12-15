@@ -2,30 +2,34 @@ import { Request, Response } from 'express';
 import ProductModel, { ProductPictureModel, ProductTagModel } from '../models/products';
 import Category from '../models/category';
 import {accessToken} from '../utils/getAccessToken'
-import SubCategory from '../models/sub-category';
-import mongoose from 'mongoose';
-import { verify } from '../utils/jwt';
 import fs from "fs";
-import path, { format } from "path";
+import path from "path";
 import axios from 'axios';
 import { fetchMetaDetails } from '../utils/fetchMetaDetails';
+import { checkToken } from '../middlewares/authMiddleware';
 
 export const getAllProducts = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { category } = req.query;
+        let { category } = req.query;
 
         if (!category) {
-            return res.status(400).json({ message: 'Category is required' });
+            res.status(400).json({ message: 'Category is required' });
+            return
         }
 
+        const categoryData = await Category.findOne({ _id: category });
+
+        if (!categoryData) throw new Error("Category not found");
+        category = categoryData.title
         const token = await accessToken();
         
         if (!token) {
-            return res.status(500).json({ message: 'Failed to fetch access token' });
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return
         }
 
         const response: any = await axios.get(
-            'https://api.moysklad.ru/api/remap/1.2/entity/product',
+            `https://api.moysklad.ru/api/remap/1.2/entity/product`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -35,8 +39,12 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         );
 
         const products = response.data?.rows || [];
-
         const groupedProducts: { [key: string]: any[] } = {};
+        
+        const tokenUser = req.headers?.authorization?.split(' ')[1];
+        const decoded: any = await checkToken(String(tokenUser))
+        let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false
+
 
         for (const product of products) {
             const pathName = product.pathName || '';
@@ -69,12 +77,13 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     name: product.name,
                     description: product.description || '',
                     archived: product.archived || false,
-                    images: images, 
-                    buyPrice: product.buyPrice?.value || null,
+                    images: images || null, 
+                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null })
                 });
             }
         }
-
+        console.log(groupedProducts);
+        
         // Respond with grouped products
         res.status(200).json(groupedProducts);
     } catch (error: any) {
@@ -85,11 +94,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         });
     }
 };
-
-
-
-
-
 
 export const findSimilarProducts = async (req: Request, res: Response) => {
     try {
@@ -110,9 +114,6 @@ export const findSimilarProducts = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Failed to retrieve similar products.", error });
     }
 };
-
-
-
 
 export const getProductsBySubcategory = async (req: Request, res: Response) => {
     try {
@@ -177,10 +178,10 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
 //         const subCategory = await SubCategory.find({ _id: subCategoryId });
 //         if (!subCategory) throw new Error("subCategory not found");
 
-//         const token = req.headers.authorization?.split(' ')[1];
-//         let decoded: any | null = verify(String(token));
+        // const token = req.headers.authorization?.split(' ')[1];
+        // let decoded: any | null = verify(String(token));
 
-//         let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+        // let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
 
 //         if (subCategory.length) {
 
