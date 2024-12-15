@@ -1,18 +1,19 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-import { accessToken } from '../utils/getAccessToken';
+import { accessToken, encodeCredentials } from '../utils/getAccessToken';
 
 const MOYSKLAD_BASE_URL = 'https://api.moysklad.ru/api/remap/1.2';
 
 /**
- * Fetch a list of all Counterparties.
- */
+  Fetch a list of all Counterparties.
+**/
 export const getAllCounteragents = async (req: Request, res: Response) => {
     try {
         const { limit = 4, offset = 0 } = req.query;
         const token = await accessToken();
-
-        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty`, {
+        let counterpartyId = ''
+        let accountId = ''
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${counterpartyId}/accounts/${accountId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
@@ -63,9 +64,8 @@ export const getSingleCounteragent = async (req: Request, res: Response) => {
 
         const response = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept-Encoding': 'gzip',
+                Authorization: `Basic ${encodeCredentials()}`,
+                "Accept-Encoding": "gzip",
             },
         });
 
