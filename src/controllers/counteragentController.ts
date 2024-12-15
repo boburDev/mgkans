@@ -59,18 +59,15 @@ export const getAllCounteragents = async (req: Request, res: Response) => {
 export const getSingleCounteragent = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const token = await accessToken();
 
-        let counterpartyId = ''
-        let accountId = ''
-        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/counterparty/${counterpartyId}/accounts/${accountId}`, {
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/report/counterparty/${id}`, {
             headers: {
                 Authorization: `Basic ${encodeCredentials()}`,
                 "Accept-Encoding": "gzip",
             },
         });
 
-        res.status(200).json(response.data);
+        res.status(200).json(response.data.counterparty);
     } catch (error) {
         console.error('Error fetching counteragent:', error);
         res.status(500).json({ message: 'Error fetching counteragent', error });
