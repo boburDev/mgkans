@@ -11,9 +11,9 @@ const ORGANIZATION_ID = process.env.ORGANIZATION_ID
 export const createOrder = async (req: Request, res: Response): Promise<any> => {
     try {
         const { items } = req.body;
-        
+
         if (!req?.user?.isLegal) throw new Error("User is not legal");
-        
+
         if (!items || items.length === 0 || !ORGANIZATION_ID) {
             return res.status(400).json({
                 message: 'Invalid input: items, and organizationId are required.',
@@ -25,23 +25,23 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
             res.status(400).json({ message: 'conterAgentId is required' });
             return;
         }
-        
+
         const totalAmount = items.reduce(
             (sum: number, item: any) => sum + item.quantity * item.price,
             0
         );
 
         const positions = items.map((item: any) => ({
-            assortment: { 
-                meta: { 
+            assortment: {
+                meta: {
                     href: `${MOYSKLAD_BASE_URL}/entity/product/${item.productId}`,
-                    type: 'product', 
-                } 
+                    type: 'product',
+                }
             },
             quantity: item.quantity,
-            price: item.price * 100, 
+            price: item.price * 100,
         }));
-        
+
         const payload = {
             organization: {
                 meta: {
@@ -58,10 +58,10 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
                 },
             },
             positions,
-            sum: totalAmount * 100, 
+            sum: totalAmount * 100,
         };
 
-        
+
         const response = await axios.post(
             `${MOYSKLAD_BASE_URL}/entity/customerorder`,
             payload,
@@ -103,31 +103,60 @@ export const getUserOrders = async (req: Request, res: Response): Promise<any> =
 
         const enrichedOrders = await Promise.all(
             orders.map(async (order: any) => {
-                
-                const positionsResponse:any = await axios.get(order.positions.meta.href, {
+                const positionsResponse: any = await axios.get(order.positions.meta.href, {
                     headers: MOYSKLAD_HEADERS,
                 });
                 const positions = positionsResponse.data.rows;
+
+                const enrichedPositions = await Promise.all(
+                    positions.map(async (position: any) => {
+                        const productUrl = position.assortment.meta.href;
+                        const productId = productUrl.split('/').pop();
+
+                        let productImage = null;
+                        try {
+                            const productResponse: any = await axios.get(productUrl, {
+                                headers: MOYSKLAD_HEADERS,
+                            });
+                            const productData = productResponse.data;
+
+                            if (productData.images?.meta?.href) {
+                                const imageResponse: any = await axios.get(productData.images.meta.href, {
+                                    headers: MOYSKLAD_HEADERS,
+                                });
+                                const images = imageResponse.data.rows;
+                                if (images.length > 0) {
+                                    productImage = images[0].miniature?.downloadHref || null;
+                                }
+                            }
+                        } catch (error: any) {
+                            console.error(`Error fetching product details for ${productId}:`, error.message);
+                        }
+
+                        return {
+                            id: productId,
+                            image: productImage,
+                            quantity: position.quantity,
+                            price: position.price / 100,
+                        };
+                    })
+                );
 
                 return {
                     id: order.id,
                     name: order.name,
                     moment: order.moment,
-                    sum: order.sum / 100, 
+                    sum: order.sum / 100,
                     state: order.state?.meta?.href || null,
                     created: order.created,
                     updated: order.updated,
                     vatEnabled: order.vatEnabled,
                     vatIncluded: order.vatIncluded,
-                    vatSum: order.vatSum / 100 || 0, 
+                    vatSum: order.vatSum / 100 || 0,
                     printed: order.printed,
                     published: order.published,
                     applicable: order.applicable,
-                    positions: positions.map((position: any) => ({
-                        product: position.assortment.meta.href,
-                        quantity: position.quantity,
-                        price: position.price / 100, 
-                    })),
+                    positions: enrichedPositions,
                 };
             })
         );
@@ -139,35 +168,36 @@ export const getUserOrders = async (req: Request, res: Response): Promise<any> =
     }
 };
 
+
 export const getAllOrders = async (req: Request, res: Response): Promise<any> => {
     try {
-        
-        const response:any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/customerorder`, {
+
+        const response: any = await axios.get(`${MOYSKLAD_BASE_URL}/entity/customerorder`, {
             headers: MOYSKLAD_HEADERS,
         });
 
         const orders = response.data.rows;
-        
+
         const enrichedOrders = await Promise.all(
             orders.map(async (order: any) => {
-                
-                const positionsResponse:any = await axios.get(order.positions.meta.href, {
+
+                const positionsResponse: any = await axios.get(order.positions.meta.href, {
                     headers: MOYSKLAD_HEADERS,
                 });
                 const positions = positionsResponse.data.rows;
 
-                
+
                 return {
                     id: order.id,
                     name: order.name,
                     description: order.description || null,
                     moment: order.moment,
                     sum: order.sum / 100,
-                    vatSum: order.vatSum / 100, 
-                    payedSum: order.payedSum / 100, 
-                    shippedSum: order.shippedSum / 100, 
-                    invoicedSum: order.invoicedSum / 100, 
-                    reservedSum: order.reservedSum / 100, 
+                    vatSum: order.vatSum / 100,
+                    payedSum: order.payedSum / 100,
+                    shippedSum: order.shippedSum / 100,
+                    invoicedSum: order.invoicedSum / 100,
+                    reservedSum: order.reservedSum / 100,
                     created: order.created,
                     updated: order.updated,
                     printed: order.printed,
@@ -177,7 +207,7 @@ export const getAllOrders = async (req: Request, res: Response): Promise<any> =>
                     positions: positions.map((position: any) => ({
                         product: position.assortment.meta.href,
                         quantity: position.quantity,
-                        price: position.price / 100, 
+                        price: position.price / 100,
                     })),
                 };
             })
