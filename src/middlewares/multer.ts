@@ -45,9 +45,6 @@ export const uploadPhoto = multer({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limits
     fileFilter: (req, file: Express.Multer.File, cb: FileFilterCallback) => {
         try {
-            // console.log("File field name:", file.fieldname);
-            // console.log("File mimetype:", file.mimetype);
-            // console.log("File originalname:", file.originalname);
             const isValidType = photo.includes(file.mimetype);
             const isValidField = ['photoFile', 'photos', 'sale', 'ads', 'bonus'].includes(file.fieldname);
 
@@ -57,7 +54,7 @@ export const uploadPhoto = multer({
                 cb(new Error("Only image files are allowed for the specified fields."));
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     },
 });
