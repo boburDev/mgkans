@@ -99,9 +99,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
     }
 };
 
-
-
-
 export const findSimilarProducts = async (req: Request, res: Response) => {
     try {
         const { hashtag } = req.body;
@@ -212,79 +209,6 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
     }
 };
 
-
-
-// export const getProductsBySubCategory = async (req: Request, res: Response) => {
-//     try {
-//         const { subCategoryId } = req.params;
-//         const subCategory = await SubCategory.find({ _id: subCategoryId });
-//         if (!subCategory) throw new Error("subCategory not found");
-
-// const token = req.headers.authorization?.split(' ')[1];
-// let decoded: any | null = verify(String(token));
-
-// let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
-
-//         if (subCategory.length) {
-
-//             const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
-
-//             const products = await ProductModel.aggregate([
-//                 {
-//                     $match: {
-//                         subCategoryId: { $in: subCategoryArray },
-//                     },
-//                 },
-//                 {
-//                     $lookup: {
-//                         from: "subcategories",
-//                         localField: "subCategoryId",
-//                         foreignField: "_id",
-//                         as: "subCategory",
-//                     },
-//                 },
-//                 {
-//                     $unwind: "$subCategory",
-//                 },
-//                 {
-//                     $addFields: {
-//                         sortIndex: {
-//                             $indexOfArray: [subCategoryArray, "$subCategoryId"],
-//                         },
-//                     },
-//                 },
-//                 {
-//                     $sort: {
-//                         sortIndex: 1,
-//                     },
-//                 },
-//                 {
-//                     $group: {
-//                         _id: "$subCategory.name",
-//                         products: {
-//                             $push: {
-//                                 path: "$path",
-//                                 name: "$name",
-//                                 definition: "$definition",
-//                                 subCategoryId: "$subCategoryId",
-//                                 productId: "$_id",
-//                                 ...(isAdmin && { price: "$price" }),
-//                             },
-//                         },
-//                     },
-//                 },
-//             ]);
-
-//             res.status(201).json({ products: products[0]?.products });
-//         } else {
-//             res.status(201).json({ products: [], message: "subcategory not found" });
-//         }
-//     } catch (error) {
-//         console.error("Error fetching products:", error);
-//         res.status(500).json({ message: "Internal server error", error });
-//     }
-// }
-
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -360,9 +284,6 @@ export const getSingleProduct = async (req: Request, res: Response) => {
     }
 };
 
-
-
-
 export const searchProductsByName = async (req: Request, res: Response) => {
     try {
         const { name } = req.query;
@@ -418,7 +339,6 @@ export const searchProductsByName = async (req: Request, res: Response) => {
         });
     }
 };
-
 
 export const createProduct = async (req: Request, res: Response) => {
     try {
@@ -555,3 +475,74 @@ export const deleteTag = async (req: Request, res: Response) => {
         res.status(400).json({ error: error });
     }
 }
+
+// export const getProductsBySubCategory = async (req: Request, res: Response) => {
+//     try {
+//         const { subCategoryId } = req.params;
+//         const subCategory = await SubCategory.find({ _id: subCategoryId });
+//         if (!subCategory) throw new Error("subCategory not found");
+
+// const token = req.headers.authorization?.split(' ')[1];
+// let decoded: any | null = verify(String(token));
+
+// let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+
+//         if (subCategory.length) {
+
+//             const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
+
+//             const products = await ProductModel.aggregate([
+//                 {
+//                     $match: {
+//                         subCategoryId: { $in: subCategoryArray },
+//                     },
+//                 },
+//                 {
+//                     $lookup: {
+//                         from: "subcategories",
+//                         localField: "subCategoryId",
+//                         foreignField: "_id",
+//                         as: "subCategory",
+//                     },
+//                 },
+//                 {
+//                     $unwind: "$subCategory",
+//                 },
+//                 {
+//                     $addFields: {
+//                         sortIndex: {
+//                             $indexOfArray: [subCategoryArray, "$subCategoryId"],
+//                         },
+//                     },
+//                 },
+//                 {
+//                     $sort: {
+//                         sortIndex: 1,
+//                     },
+//                 },
+//                 {
+//                     $group: {
+//                         _id: "$subCategory.name",
+//                         products: {
+//                             $push: {
+//                                 path: "$path",
+//                                 name: "$name",
+//                                 definition: "$definition",
+//                                 subCategoryId: "$subCategoryId",
+//                                 productId: "$_id",
+//                                 ...(isAdmin && { price: "$price" }),
+//                             },
+//                         },
+//                     },
+//                 },
+//             ]);
+
+//             res.status(201).json({ products: products[0]?.products });
+//         } else {
+//             res.status(201).json({ products: [], message: "subcategory not found" });
+//         }
+//     } catch (error) {
+//         console.error("Error fetching products:", error);
+//         res.status(500).json({ message: "Internal server error", error });
+//     }
+// }
