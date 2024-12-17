@@ -72,6 +72,11 @@ export const updateLegalUserStatus = async (req: Request, res: Response): Promis
             return;
         }
 
+        if (!conterAgentId) {
+            res.status(400).json({ message: 'conterAgentId is required' });
+            return;
+        }
+
         if (status === undefined) {
             res.status(400).json({ message: 'Status is required' });
             return;
