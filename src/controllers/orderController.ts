@@ -8,13 +8,14 @@ const MOYSKLAD_HEADERS = {
     'Authorization': `Basic ${Buffer.from(`${process.env.LOGIN}:${process.env.PASSWORD}`).toString('base64')}`,
     'Content-Type': 'application/json',
 };
+const ORGANIZATION_ID = ''
 
 export const createOrder = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { userId, items, organizationId } = req.body;
+        const { userId, items } = req.body;
 
         // Validate required fields
-        if (!userId || !items || items.length === 0 || !organizationId) {
+        if (!userId || !items || items.length === 0 || !ORGANIZATION_ID) {
             return res.status(400).json({
                 message: 'Invalid input: userId, items, and organizationId are required.',
             });
@@ -43,7 +44,7 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
         const payload = {
             organization: {
                 meta: {
-                    href: `${MOYSKLAD_BASE_URL}/entity/organization/${organizationId}`,
+                    href: `${MOYSKLAD_BASE_URL}/entity/organization/${ORGANIZATION_ID}`,
                     type: 'organization',
                     mediaType: 'application/json',
                 },

@@ -9,6 +9,7 @@ interface LUser extends Document {
     pnfl: string;
     status: number;
     point: number;
+    conterAgentId: string;
 }
 
 const legalUserSchema: Schema = new Schema({
@@ -20,6 +21,7 @@ const legalUserSchema: Schema = new Schema({
     point: { type: Number, required: false, default: 0 },
     company_name: { type: String, required: true },
     pnfl: { type: String, required: true, unique: true },
+    conterAgentId: { type: String, required: false, unique: true },
 });
 
 const legalUser = mongoose.model<LUser>('LUser', legalUserSchema);

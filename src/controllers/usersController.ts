@@ -65,7 +65,7 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
 
 export const updateLegalUserStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { status, userId } = req.body;
+        const { status, userId, conterAgentId } = req.body;
 
         if (!userId) {
             res.status(400).json({ message: 'User ID is required' });
@@ -90,7 +90,7 @@ export const updateLegalUserStatus = async (req: Request, res: Response): Promis
 
         const updatedUser = await legalUser.findByIdAndUpdate(
             userId,
-            { status: statusNumber },
+            { status: statusNumber, conterAgentId: conterAgentId },
             { new: true, runValidators: true }
         );
 
