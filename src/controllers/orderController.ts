@@ -11,7 +11,7 @@ const ORGANIZATION_ID = process.env.ORGANIZATION_ID
 export const createOrder = async (req: Request, res: Response): Promise<any> => {
     try {
         const { items } = req.body;
-
+        
         if (!req?.user?.isLegal) throw new Error("User is not legal");
         
         if (!items || items.length === 0 || !ORGANIZATION_ID) {
@@ -20,6 +20,8 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
             });
         }
         const userId = req.user.userLegal.conterAgentId
+        console.log(userId);
+        console.log(ORGANIZATION_ID);
 
         if (!userId) {
             res.status(400).json({ message: 'conterAgentId is required' });
