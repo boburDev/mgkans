@@ -84,10 +84,10 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
 
 export const getUserOrders = async (req: Request, res: Response): Promise<any> => {
     try {
-        // if (!req?.user?.isLegal) throw new Error("User is not legal");
-        const userId = '00a88e1f-358e-11ed-0a80-02940005da2c'
-        // req.user.userLegal.conterAgentId
-
+        if (!req?.user?.isLegal) throw new Error("User is not legal");
+        const userId = req.user.userLegal.conterAgentId
+        // '00a88e1f-358e-11ed-0a80-02940005da2c'
+        
         if (!userId) {
             return res.status(400).json({ message: 'Invalid input: userId is required.' });
         }
@@ -114,11 +114,13 @@ export const getUserOrders = async (req: Request, res: Response): Promise<any> =
                         const productId = productUrl.split('/').pop();
 
                         let productImage = null;
+                        let productName = null;
                         try {
                             const productResponse: any = await axios.get(productUrl, {
                                 headers: MOYSKLAD_HEADERS,
                             });
                             const productData = productResponse.data;
+                            productName = productData.name
 
                             if (productData.images?.meta?.href) {
                                 const imageResponse: any = await axios.get(productData.images.meta.href, {
@@ -135,6 +137,7 @@ export const getUserOrders = async (req: Request, res: Response): Promise<any> =
 
                         return {
                             id: productId,
+                            name: productName,
                             image: productImage,
                             quantity: position.quantity,
                             price: position.price / 100,
