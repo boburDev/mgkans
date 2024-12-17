@@ -63,6 +63,33 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
     }
 };
 
+
+export const getLegalsUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { userId } = req.params;
+
+        const userLegal = await legalUser.findById(userId).select('-password');
+        if (!userLegal) throw new Error('User not found!');
+
+        let data = {
+            id: userLegal._id,
+            name: userLegal.name,
+            phone: userLegal.phone,
+            email: userLegal.email,
+            point: userLegal.point,
+            status: userLegal.status,
+            company_name: userLegal.company_name,
+            pnfl: userLegal.pnfl,
+            conterAgentId: userLegal.conterAgentId
+        }
+        
+        res.status(200).json({ message: 'Legal users fetched successfully', data: data });
+    } catch (error) {
+        console.error('Error fetching legal users by status:', error);
+        res.status(500).json({ message: 'An error occurred while fetching legal users', error });
+    }
+};
+
 export const updateLegalUserStatus = async (req: Request, res: Response): Promise<void> => {
     try {
         const { status, userId, conterAgentId } = req.body;
