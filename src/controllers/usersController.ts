@@ -46,7 +46,7 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
                 company_name: user.company_name,
                 pnfl: user.pnfl,
                 email: user.email,
-                conterAgentId: userLegal.conterAgentId
+                conterAgentId: user.conterAgentId
             }
             if (user.status == 1) {
                 newUser.status = 'request';
