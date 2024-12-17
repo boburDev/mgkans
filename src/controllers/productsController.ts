@@ -14,18 +14,18 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
 
         if (!category) {
             res.status(400).json({ message: 'Category is required' });
-            return
+            return;
         }
 
         const categoryData = await Category.findOne({ _id: category });
 
         if (!categoryData) throw new Error("Category not found");
-        category = categoryData.title
+        category = categoryData.title;
         const token = await accessToken();
 
         if (!token) {
             res.status(500).json({ message: 'Failed to fetch access token' });
-            return
+            return;
         }
 
         const response: any = await axios.get(
@@ -39,12 +39,11 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         );
 
         const products = response.data?.rows || [];
-        const groupedProducts: { [key: string]: any[] } = {};
+        const groupedProducts: { [key: string]: any[] } = {}; // Adjusted to store arrays of products directly
 
         const tokenUser = req.headers?.authorization?.split(' ')[1];
-        const decoded: any = await checkToken(String(tokenUser))
-        let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false
-
+        const decoded: any = await checkToken(String(tokenUser));
+        let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false;
 
         for (const product of products) {
             const pathName = product.pathName || '';
@@ -52,7 +51,11 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
 
             // Only include products matching the `category`
             if (mainCategory === category) {
-                const subCategoryKey = subCategory || 'Uncategorized';
+                const subCategoryName = subCategory || 'Uncategorized';
+                const subCategoryId = product.productFolder.meta.href.split("productfolder/")[1];
+
+                // Create the key in the format "subcategoryName:id"
+                const subCategoryKey = `${subCategoryName}:${subCategoryId}`;
 
                 // Initialize array for subcategory if it doesn't exist
                 if (!groupedProducts[subCategoryKey]) {
@@ -79,11 +82,10 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     description: product.description || '',
                     archived: product.archived || false,
                     images: images || null,
-                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null })
+                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
                 });
             }
         }
-        console.log(groupedProducts);
 
         // Respond with grouped products
         res.status(200).json(groupedProducts);
@@ -95,6 +97,9 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         });
     }
 };
+
+
+
 
 export const findSimilarProducts = async (req: Request, res: Response) => {
     try {
@@ -311,7 +316,7 @@ export const getSingleProduct = async (req: Request, res: Response) => {
                 ? decoded?.isLegal && decoded?.userLegal?.status == 2
                 : false;
 
-        // Extract subcategory
+        // Extract mainCategory and subCategory from pathName
         const pathName = product.pathName || '';
         const [mainCategory, subCategory] = pathName.split('/');
 
@@ -337,8 +342,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
             price: product.salePrices?.[0]?.value || 0,
             archived: product.archived || false,
             pathName: product.pathName || '',
+            subcategoryId: product.productFolder.meta.href.split("productfolder/")[1],
             mainCategory: mainCategory || '',
-            subCategory: subCategory || 'Uncategorized',
             images: images || null,
             ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
         };
@@ -353,6 +358,7 @@ export const getSingleProduct = async (req: Request, res: Response) => {
         });
     }
 };
+
 
 
 
