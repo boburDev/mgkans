@@ -132,7 +132,7 @@ export const getUserOrders = async (req: Request, res: Response): Promise<any> =
             })
         );
 
-        res.status(200).json({ data: response.data, error: false, message: 'User orders fetched successfully.' });
+        res.status(200).json({ data: enrichedOrders, error: false, message: 'User orders fetched successfully.' });
     } catch (error: any) {
         console.error('Error fetching user orders:', error);
         res.status(500).json({ message: 'Error fetching user orders', error: error.response?.data || error.message });
