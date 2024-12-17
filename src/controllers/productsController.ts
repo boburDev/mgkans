@@ -1,84 +1,97 @@
 import { Request, Response } from 'express';
 import ProductModel, { ProductPictureModel, ProductTagModel } from '../models/products';
 import Category from '../models/category';
-import SubCategory from '../models/sub-category';
-import mongoose from 'mongoose';
-import { verify } from '../utils/jwt';
+import {accessToken} from '../utils/getAccessToken'
 import fs from "fs";
 import path from "path";
+import axios from 'axios';
+import { fetchMetaDetails } from '../utils/fetchMetaDetails';
+import { checkToken } from '../middlewares/authMiddleware';
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getAllProducts = async (req: Request, res: Response): Promise<any> => {
     try {
-        const catalog = await Category.findOne({ route: `/${req.params.name}` });
-        if (!catalog) throw new Error("Category not found");
-        const subCategory = await SubCategory.find({ categoryId: catalog._id });
+        let { category } = req.query;
 
-        const token = req.headers.authorization?.split(' ')[1];
-        let decoded: any | null = verify(String(token));
-        
-        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
-
-        if (subCategory.length) {
-
-            const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
-
-            const products = await ProductModel.aggregate([
-                {
-                    $match: {
-                        subCategoryId: { $in: subCategoryArray },
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "subcategories",
-                        localField: "subCategoryId",
-                        foreignField: "_id",
-                        as: "subCategory",
-                    },
-                },
-                {
-                    $unwind: "$subCategory",
-                },
-                {
-                    $addFields: {
-                        sortIndex: {
-                            $indexOfArray: [subCategoryArray, "$subCategoryId"],
-                        },
-                    },
-                },
-                {
-                    $sort: {
-                        sortIndex: 1,
-                    },
-                },
-                {
-                    $group: {
-                        _id: "$subCategory.name",
-                        products: {
-                            $push: {
-                                path: "$path",
-                                name: "$name",
-                                definition: "$definition",
-                                subCategoryId: "$subCategoryId",
-                                productId: "$_id",
-                                ...(isAdmin && { price: "$price" }),
-                            },
-                        },
-                    },
-                },
-            ]);
-            
-            const formattedProducts: Record<string, any[]> = {};
-            products.forEach((category) => {
-                formattedProducts[category._id] = category.products;
-            });
-
-            res.status(201).json({ products: formattedProducts });
-        } else {
-            res.status(201).json({ products: [], message: "subcategory not found" });
+        if (!category) {
+            res.status(400).json({ message: 'Category is required' });
+            return
         }
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating user', error });
+
+        const categoryData = await Category.findOne({ _id: category });
+
+        if (!categoryData) throw new Error("Category not found");
+        category = categoryData.title
+        const token = await accessToken();
+        
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return
+        }
+
+        const response: any = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/product`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        const products = response.data?.rows || [];
+        const groupedProducts: { [key: string]: any[] } = {};
+        
+        const tokenUser = req.headers?.authorization?.split(' ')[1];
+        const decoded: any = await checkToken(String(tokenUser))
+        let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false
+
+
+        for (const product of products) {
+            const pathName = product.pathName || '';
+            const [mainCategory, subCategory] = pathName.split('/'); 
+
+            // Only include products matching the `category`
+            if (mainCategory === category) {
+                const subCategoryKey = subCategory || 'Uncategorized';
+
+                // Initialize array for subcategory if it doesn't exist
+                if (!groupedProducts[subCategoryKey]) {
+                    groupedProducts[subCategoryKey] = [];
+                }
+
+                // Fetch images metadata for the product if it has images
+                let images = [];
+                if (product.images?.meta?.href) {
+                    const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
+                    if (imageDetails) {
+                        images = imageDetails.map((image: any) => ({
+                            title: image.title,
+                            filename: image.filename,
+                        }));
+                    }
+                }
+
+                // Add the product with image details to the relevant subcategory group
+                groupedProducts[subCategoryKey].push({
+                    id: product.id,
+                    name: product.name,
+                    description: product.description || '',
+                    archived: product.archived || false,
+                    images: images || null, 
+                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null })
+                });
+            }
+        }
+        console.log(groupedProducts);
+        
+        // Respond with grouped products
+        res.status(200).json(groupedProducts);
+    } catch (error: any) {
+        console.error('Error fetching products by category:', error);
+        res.status(500).json({
+            message: 'Failed to fetch products by category',
+            error: error.response?.data || error.message,
+        });
     }
 };
 
@@ -102,159 +115,230 @@ export const findSimilarProducts = async (req: Request, res: Response) => {
     }
 };
 
-export const getProductsBySubCategory = async (req: Request, res: Response) => {
+export const getProductsBySubcategory = async (req: Request, res: Response) => {
     try {
-        const { subCategoryId } = req.params;
-        const subCategory = await SubCategory.find({ _id: subCategoryId });
-        if (!subCategory) throw new Error("subCategory not found");
+        const { subcategoryId } = req.params;
 
-        const token = req.headers.authorization?.split(' ')[1];
-        let decoded: any | null = verify(String(token));
-
-        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
-
-        if (subCategory.length) {
-
-            const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
-
-            const products = await ProductModel.aggregate([
-                {
-                    $match: {
-                        subCategoryId: { $in: subCategoryArray },
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "subcategories",
-                        localField: "subCategoryId",
-                        foreignField: "_id",
-                        as: "subCategory",
-                    },
-                },
-                {
-                    $unwind: "$subCategory",
-                },
-                {
-                    $addFields: {
-                        sortIndex: {
-                            $indexOfArray: [subCategoryArray, "$subCategoryId"],
-                        },
-                    },
-                },
-                {
-                    $sort: {
-                        sortIndex: 1,
-                    },
-                },
-                {
-                    $group: {
-                        _id: "$subCategory.name",
-                        products: {
-                            $push: {
-                                path: "$path",
-                                name: "$name",
-                                definition: "$definition",
-                                subCategoryId: "$subCategoryId",
-                                productId: "$_id",
-                                ...(isAdmin && { price: "$price" }),
-                            },
-                        },
-                    },
-                },
-            ]);
-
-            res.status(201).json({ products: products[0]?.products });
-        } else {
-            res.status(201).json({ products: [], message: "subcategory not found" });
+        if (!subcategoryId || typeof subcategoryId !== 'string') {
+            res.status(400).json({ message: 'Subcategory ID is required' });
+            return;
         }
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        res.status(500).json({ message: "Internal server error", error });
+
+        // Fetch the access token
+        const token = await accessToken();
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return;
+        }
+
+        // Fetch all products
+        const response: any = await axios.get(
+            'https://api.moysklad.ru/api/remap/1.2/entity/product',
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        // Filter products by subcategory (productFolder)
+        const filteredProducts = response.data.rows.filter(
+            (product: any) =>
+                product.productFolder?.meta?.href &&
+                product.productFolder.meta.href.includes(subcategoryId)
+        );
+
+        // Format the response
+        const formattedProducts = filteredProducts.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        }));
+
+        // Respond with the filtered products
+        res.status(200).json({ data: formattedProducts });
+    } catch (error: any) {
+        console.error('Error fetching products by subcategory:', error.message);
+        res.status(500).json({
+            message: 'Failed to fetch products by subcategory',
+            error: error.response?.data || error.message,
+        });
     }
-}
+};
+
+
+// export const getProductsBySubCategory = async (req: Request, res: Response) => {
+//     try {
+//         const { subCategoryId } = req.params;
+//         const subCategory = await SubCategory.find({ _id: subCategoryId });
+//         if (!subCategory) throw new Error("subCategory not found");
+
+        // const token = req.headers.authorization?.split(' ')[1];
+        // let decoded: any | null = verify(String(token));
+
+        // let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+
+//         if (subCategory.length) {
+
+//             const subCategoryArray = subCategory.map((id) => new mongoose.Types.ObjectId(id.id))
+
+//             const products = await ProductModel.aggregate([
+//                 {
+//                     $match: {
+//                         subCategoryId: { $in: subCategoryArray },
+//                     },
+//                 },
+//                 {
+//                     $lookup: {
+//                         from: "subcategories",
+//                         localField: "subCategoryId",
+//                         foreignField: "_id",
+//                         as: "subCategory",
+//                     },
+//                 },
+//                 {
+//                     $unwind: "$subCategory",
+//                 },
+//                 {
+//                     $addFields: {
+//                         sortIndex: {
+//                             $indexOfArray: [subCategoryArray, "$subCategoryId"],
+//                         },
+//                     },
+//                 },
+//                 {
+//                     $sort: {
+//                         sortIndex: 1,
+//                     },
+//                 },
+//                 {
+//                     $group: {
+//                         _id: "$subCategory.name",
+//                         products: {
+//                             $push: {
+//                                 path: "$path",
+//                                 name: "$name",
+//                                 definition: "$definition",
+//                                 subCategoryId: "$subCategoryId",
+//                                 productId: "$_id",
+//                                 ...(isAdmin && { price: "$price" }),
+//                             },
+//                         },
+//                     },
+//                 },
+//             ]);
+
+//             res.status(201).json({ products: products[0]?.products });
+//         } else {
+//             res.status(201).json({ products: [], message: "subcategory not found" });
+//         }
+//     } catch (error) {
+//         console.error("Error fetching products:", error);
+//         res.status(500).json({ message: "Internal server error", error });
+//     }
+// }
 
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
-    const { id } = req.params;
-    const product = await ProductModel.findById(id)
-      .populate({
-        path: "subCategoryId",
-        select: "name order",
-        model: SubCategory,
-      })
-      .exec();
+        const { id } = req.params;
+        const token = await accessToken();
 
-    if (!product) {
-      res.status(404).json({ message: "Product not found" });
-      return
+        const productResponse = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
+        );
+
+        const product: any = productResponse.data;
+
+        // Format the response to only include relevant product fields
+        const formattedProduct = {
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        };
+
+        // Send the formatted product response
+        res.status(200).json({ data: formattedProduct });
+    } catch (error: any) {
+        console.error("Error fetching product:", error);
+        res.status(500).json({
+            message: "Error fetching product",
+            error: error.response?.data || error.message,
+        });
     }
+};
 
-    const pictures = await ProductPictureModel.find({ productId: id }).select("path");
-
-    const response = {
-      id: product._id,
-      name: product.name,
-      definition: product.definition,
-      price: product.price,
-      rate: product.rate,
-      count: product.count,
-      sale: product.sale,
-      hashtag: product.hashtag,
-      path: product.path,
-      subCategory: product.subCategoryId,
-      pictures,
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    res.status(500).json({ message: "Error fetching product", error });
-  }
-}
 
 export const searchProductsByName = async (req: Request, res: Response) => {
     try {
         const { name } = req.query;
+        const token = await accessToken();
         
         if (!name || typeof name !== "string") {
             res.status(400).json({ error: "Please provide a valid product name to search." });
-            return
+            return;
         }
 
-        const token = req.headers.authorization?.split(' ')[1];
-        let decoded: any | null = verify(String(token));
-
-        let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
-
-        
-        const projection: any = {};
-        if (isAdmin != true) {
-            projection.price = 0; 
-        }
-
-        
-        const products = await ProductModel.find(
+        const productsResponse: any = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/product`,
             {
-                name: { $regex: name, $options: "i" }, 
-            },
-            projection 
+                params: {
+                    search: name, // Use the `search` query parameter to search by name
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept-Encoding': 'gzip',
+                },
+            }
         );
 
-        
+        const products = productsResponse.data.rows;
+
+        // If no products are found
         if (!products.length) {
             res.status(404).json({ message: "No products found with the given name." });
-            return
+            return;
         }
 
-        
+        // Format the product response to only include relevant fields
+        const formattedProducts = products.map((product: any) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            code: product.code || '',
+            price: product.salePrices?.[0]?.value || 0,
+            archived: product.archived || false,
+            productFolder: product.productFolder?.meta?.href || '',
+        }));
+
+        // Send the formatted products response
         res.status(200).json({
             message: "Products retrieved successfully",
-            products,
+            data: formattedProducts,
         });
-    } catch (error) {
-        res.status(500).json({ message: "Error searching products by name", error });
+    } catch (error: any) {
+        console.error("Error searching products by name:", error);
+        res.status(500).json({
+            message: "Error searching products by name",
+            error: error.response?.data || error.message,
+        });
     }
 };
+
 
 export const createProduct = async (req: Request, res: Response) => {
     try {

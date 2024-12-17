@@ -6,11 +6,11 @@ import { validateJWT } from '../middlewares/validateAdmin';
 const router = express.Router();
 
 router
-    .get('/:name/all', products.getProducts)
-    .get('/signle/:id', products.getSingleProduct)
+    .get('/all', products.getAllProducts)
+    .get('/single/:id', products.getSingleProduct)
     .get('/search', products.searchProductsByName)
     .get('/similar-products', products.findSimilarProducts)
-    .get('/by-id/:subCategoryId', products.getProductsBySubCategory)
+    .get('/by-subcategory/:subcategoryId', products.getProductsBySubcategory)
     .post('/create', validateJWT, uploadPhoto.array('photos', 5), products.createProduct)
     .post('/delete', validateJWT, products.deleteProduct)
     .get('/tags', validateJWT, products.getTags)

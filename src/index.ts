@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import router from './routers';
 import path from 'path';
 
@@ -13,8 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join('public')));
-dotenv.config();
-console.log(process.env);
+console.log(process.env.PORT);
 
 // Routes
 app.get('/', (req: Request, res: Response) => { res.send('ok') })

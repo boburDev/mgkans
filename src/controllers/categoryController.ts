@@ -1,17 +1,33 @@
 import fs from 'fs';
 import path from 'path'; 
-import { Request, Response } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import Category from '../models/category';
 import SubCategory from '../models/sub-category';
+import axios from 'axios';
+import {accessToken} from '../utils/getAccessToken'
 
 export const getAllCategory = async (req: Request, res: Response) => {
     try {
-        const catalog = await Category.find().select("title path route colour order").sort({ order: 1 });
-        res.status(201).json({ catalog });
+        const token = await accessToken();
+        
+        const moyskladResponse:any = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/productfolder`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept-Encoding': 'gzip',
+            },
+        });
+
+        const pathNames = moyskladResponse.data.rows.map((row: any) => row.pathName);
+        const categories = await Category.find({ title: { $in: pathNames } });
+
+        res.status(200).json({ categories });
     } catch (error) {
-        res.status(500).json({ message: 'Error get category', error });
+        console.error('Error fetching categories:', error);
+        res.status(500).json({ message: 'Error fetching categories', error });
     }
 };
+
 
 export const createCategory = async (req: Request, res: Response) => {
     try {
@@ -29,8 +45,8 @@ export const createCategory = async (req: Request, res: Response) => {
         await newCategory.save();
 
         res.json({ data: newCategory, error: false, message: null })
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating category', error });
+    } catch (error:any) {
+        res.status(500).json({ message: 'Error creating category', error: error.message });
     }
 };
 
