@@ -53,9 +53,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
             if (mainCategory === category) {
                 const subCategoryName = subCategory || 'Uncategorized';
                 const subCategoryId = product.productFolder.meta.href.split("productfolder/")[1];
-
-                // Create the key in the format "subcategoryName:id"
-                const subCategoryKey = `${subCategoryName}:::${subCategoryId}`;
+                const subCategoryKey = `${subCategoryName}`;
 
                 // Initialize array for subcategory if it doesn't exist
                 if (!groupedProducts[subCategoryKey]) {
@@ -82,6 +80,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     description: product.description || '',
                     archived: product.archived || false,
                     images: images || null,
+                    subCategoryId: subCategoryId,
                     ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
                 });
             }
