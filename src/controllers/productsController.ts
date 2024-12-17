@@ -55,7 +55,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                 const subCategoryId = product.productFolder.meta.href.split("productfolder/")[1];
 
                 // Create the key in the format "subcategoryName:id"
-                const subCategoryKey = `${subCategoryName}:${subCategoryId}`;
+                const subCategoryKey = `${subCategoryName}:::${subCategoryId}`;
 
                 // Initialize array for subcategory if it doesn't exist
                 if (!groupedProducts[subCategoryKey]) {
