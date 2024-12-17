@@ -35,7 +35,7 @@ export const getLegalsUsers = async (req: Request, res: Response): Promise<void>
         }
 
         const query = statusNumber === 4 ? {} : { status: statusNumber };
-        let users = await legalUser.find(query).select('_id name email phone point status company_name pnfl');
+        let users = await legalUser.find(query).select('_id name email phone point status company_name pnfl conterAgentId');
         let newUsers = users.map((user:any) => {
             let newUser = {
                 id: user._id,
