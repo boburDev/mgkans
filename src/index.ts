@@ -13,13 +13,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join('public')));
-console.log(process.env.PORT);
 
 // Routes
 app.get('/', (req: Request, res: Response) => { res.send('ok') })
 app.use('/', router);
 
-console.log('MongoDB URI:', mongoDb);
 // Connect to MongoDB
 mongoose
     .connect(mongoDb)

@@ -184,7 +184,6 @@ export const updateSubCategory = async (req: Request, res: Response) => {
 export const deleteSubCategory = async (req: Request, res: Response) => {
     try {
         const { id } = req.body;
-        console.log(req.body);
         
         const deletedSubCategory = await SubCategory.findByIdAndDelete(id);
 
