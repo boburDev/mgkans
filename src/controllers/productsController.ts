@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import ProductModel, { ProductPictureModel, ProductTagModel } from '../models/products';
 import Category from '../models/category';
-import {accessToken} from '../utils/getAccessToken'
+import { accessToken } from '../utils/getAccessToken'
 import fs from "fs";
 import path from "path";
 import axios from 'axios';
@@ -22,7 +22,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         if (!categoryData) throw new Error("Category not found");
         category = categoryData.title
         const token = await accessToken();
-        
+
         if (!token) {
             res.status(500).json({ message: 'Failed to fetch access token' });
             return
@@ -40,7 +40,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
 
         const products = response.data?.rows || [];
         const groupedProducts: { [key: string]: any[] } = {};
-        
+
         const tokenUser = req.headers?.authorization?.split(' ')[1];
         const decoded: any = await checkToken(String(tokenUser))
         let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false
@@ -48,7 +48,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
 
         for (const product of products) {
             const pathName = product.pathName || '';
-            const [mainCategory, subCategory] = pathName.split('/'); 
+            const [mainCategory, subCategory] = pathName.split('/');
 
             // Only include products matching the `category`
             if (mainCategory === category) {
@@ -67,6 +67,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                         images = imageDetails.map((image: any) => ({
                             title: image.title,
                             filename: image.filename,
+                            href: image.miniature.downloadHref,
                         }));
                     }
                 }
@@ -77,13 +78,13 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     name: product.name,
                     description: product.description || '',
                     archived: product.archived || false,
-                    images: images || null, 
+                    images: images || null,
                     ...(isAdmin && { buyPrice: product.buyPrice?.value || null })
                 });
             }
         }
         console.log(groupedProducts);
-        
+
         // Respond with grouped products
         res.status(200).json(groupedProducts);
     } catch (error: any) {
@@ -142,26 +143,60 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
             }
         );
 
-        // Filter products by subcategory (productFolder)
-        const filteredProducts = response.data.rows.filter(
-            (product: any) =>
+        const products = response.data?.rows || [];
+        const groupedProducts: { [key: string]: any[] } = {};
+
+        // Check admin status
+        const tokenUser = req.headers?.authorization?.split(' ')[1];
+        const decoded: any = await checkToken(String(tokenUser));
+        const isAdmin: any =
+            typeof decoded !== 'string'
+                ? decoded?.isLegal && decoded?.userLegal?.status == 2
+                : false;
+
+        for (const product of products) {
+            const pathName = product.pathName || '';
+            const [mainCategory, subCategory] = pathName.split('/');
+
+            // Only include products matching the `subcategoryId`
+            if (
                 product.productFolder?.meta?.href &&
                 product.productFolder.meta.href.includes(subcategoryId)
-        );
+            ) {
+                const subCategoryKey = subCategory || 'Uncategorized';
 
-        // Format the response
-        const formattedProducts = filteredProducts.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description || '',
-            code: product.code || '',
-            price: product.salePrices?.[0]?.value || 0,
-            archived: product.archived || false,
-            productFolder: product.productFolder?.meta?.href || '',
-        }));
+                // Initialize array for subcategory if it doesn't exist
+                if (!groupedProducts[subCategoryKey]) {
+                    groupedProducts[subCategoryKey] = [];
+                }
 
-        // Respond with the filtered products
-        res.status(200).json({ data: formattedProducts });
+                // Fetch images metadata for the product if it has images
+                let images = [];
+                if (product.images?.meta?.href) {
+                    const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
+                    if (imageDetails) {
+                        images = imageDetails.map((image: any) => ({
+                            title: image.title,
+                            filename: image.filename,
+                            href: image.miniature.downloadHref,
+                        }));
+                    }
+                }
+
+                // Add the product with image details to the relevant subcategory group
+                groupedProducts[subCategoryKey].push({
+                    id: product.id,
+                    name: product.name,
+                    description: product.description || '',
+                    archived: product.archived || false,
+                    images: images || null,
+                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
+                });
+            }
+        }
+
+        // Respond with grouped products
+        res.status(200).json(groupedProducts);
     } catch (error: any) {
         console.error('Error fetching products by subcategory:', error.message);
         res.status(500).json({
@@ -172,16 +207,17 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
 };
 
 
+
 // export const getProductsBySubCategory = async (req: Request, res: Response) => {
 //     try {
 //         const { subCategoryId } = req.params;
 //         const subCategory = await SubCategory.find({ _id: subCategoryId });
 //         if (!subCategory) throw new Error("subCategory not found");
 
-        // const token = req.headers.authorization?.split(' ')[1];
-        // let decoded: any | null = verify(String(token));
+// const token = req.headers.authorization?.split(' ')[1];
+// let decoded: any | null = verify(String(token));
 
-        // let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
+// let isAdmin: any = decoded ? (decoded.isLegal && decoded?.userLegal?.status == 2) : false
 
 //         if (subCategory.length) {
 
@@ -246,8 +282,15 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
 export const getSingleProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const token = await accessToken();
 
+        // Fetch the access token
+        const token = await accessToken();
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return;
+        }
+
+        // Fetch product details
         const productResponse = await axios.get(
             `https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`,
             {
@@ -260,7 +303,32 @@ export const getSingleProduct = async (req: Request, res: Response) => {
 
         const product: any = productResponse.data;
 
-        // Format the response to only include relevant product fields
+        // Check admin status
+        const tokenUser = req.headers?.authorization?.split(' ')[1];
+        const decoded: any = await checkToken(String(tokenUser));
+        const isAdmin: any =
+            typeof decoded !== 'string'
+                ? decoded?.isLegal && decoded?.userLegal?.status == 2
+                : false;
+
+        // Extract subcategory
+        const pathName = product.pathName || '';
+        const [mainCategory, subCategory] = pathName.split('/');
+
+        // Fetch images metadata for the product if it has images
+        let images = [];
+        if (product.images?.meta?.href) {
+            const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
+            if (imageDetails) {
+                images = imageDetails.map((image: any) => ({
+                    title: image.title,
+                    filename: image.filename,
+                    href: image.downloadHref,
+                }));
+            }
+        }
+
+        // Format the product response
         const formattedProduct = {
             id: product.id,
             name: product.name,
@@ -268,26 +336,31 @@ export const getSingleProduct = async (req: Request, res: Response) => {
             code: product.code || '',
             price: product.salePrices?.[0]?.value || 0,
             archived: product.archived || false,
-            productFolder: product.productFolder?.meta?.href || '',
+            pathName: product.pathName || '',
+            mainCategory: mainCategory || '',
+            subCategory: subCategory || 'Uncategorized',
+            images: images || null,
+            ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
         };
 
         // Send the formatted product response
         res.status(200).json({ data: formattedProduct });
     } catch (error: any) {
-        console.error("Error fetching product:", error);
+        console.error('Error fetching product:', error);
         res.status(500).json({
-            message: "Error fetching product",
+            message: 'Error fetching product',
             error: error.response?.data || error.message,
         });
     }
 };
 
 
+
 export const searchProductsByName = async (req: Request, res: Response) => {
     try {
         const { name } = req.query;
         const token = await accessToken();
-        
+
         if (!name || typeof name !== "string") {
             res.status(400).json({ error: "Please provide a valid product name to search." });
             return;

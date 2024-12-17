@@ -4,9 +4,6 @@ import { accessToken, encodeCredentials } from '../utils/getAccessToken';
 
 const MOYSKLAD_BASE_URL = 'https://api.moysklad.ru/api/remap/1.2';
 
-/**
-  Fetch a list of all Counterparties.
-**/
 export const getAllCounteragents = async (req: Request, res: Response) => {
     try {
         const { limit = 4, offset = 0 } = req.query;
