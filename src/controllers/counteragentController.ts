@@ -50,9 +50,6 @@ export const getAllCounteragents = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * Fetch a single Counterparty by ID.
- */
 export const getSingleCounteragent = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

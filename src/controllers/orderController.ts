@@ -8,19 +8,21 @@ const MOYSKLAD_HEADERS = {
     'Authorization': `Basic ${Buffer.from(`${process.env.LOGIN}:${process.env.PASSWORD}`).toString('base64')}`,
     'Content-Type': 'application/json',
 };
-const ORGANIZATION_ID = ''
+const ORGANIZATION_ID = process.env.ORGANIZATION_ID
 
 export const createOrder = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { userId, items } = req.body;
+        const { items } = req.body;
 
+        if (!req?.user?.isLegal) throw new Error("User is not legal");
+        
         // Validate required fields
-        if (!userId || !items || items.length === 0 || !ORGANIZATION_ID) {
+        if (!items || items.length === 0 || !ORGANIZATION_ID) {
             return res.status(400).json({
-                message: 'Invalid input: userId, items, and organizationId are required.',
+                message: 'Invalid input: items, and organizationId are required.',
             });
         }
-
+        const userId = req.user.userLegal.conterAgentId
         // Calculate total amount
         const totalAmount = items.reduce(
             (sum: number, item: any) => sum + item.quantity * item.price,
@@ -82,10 +84,10 @@ export const createOrder = async (req: Request, res: Response): Promise<any> => 
     }
 };
 
-
 export const getUserOrders = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { userId } = req.params;
+        if (!req?.user?.isLegal) throw new Error("User is not legal");
+        const userId = req.user.userLegal.conterAgentId
 
         if (!userId) {
             return res.status(400).json({ message: 'Invalid input: userId is required.' });
