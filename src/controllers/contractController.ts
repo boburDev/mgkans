@@ -92,6 +92,8 @@ export const getContractSingle = async (req: Request, res: Response): Promise<an
     try {
         if (!req?.user?.isLegal) throw new Error("User is not legal");
         const id = req?.user?.userLegal?.conterAgentId
+        console.log(id)
+        
         if (!id) {
             res.status(200).json({ data: null });
             return
