@@ -28,6 +28,16 @@ export const getAllCategory = async (req: Request, res: Response) => {
     }
 };
 
+export const getAllCategory1 = async (req: Request, res: Response) => {
+    try {
+        const catalog = await Category.find().select("title path route colour order").sort({ order: 1 });
+        res.status(201).json({ catalog });
+    } catch (error) {
+        res.status(500).json({ message: 'Error get category', error });
+    }
+};
+
+
 
 export const createCategory = async (req: Request, res: Response) => {
     try {

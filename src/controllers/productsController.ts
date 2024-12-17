@@ -323,7 +323,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
                 images = imageDetails.map((image: any) => ({
                     title: image.title,
                     filename: image.filename,
-                    href: image.downloadHref,
+                    // href: image.downloadHref,
+		    href: image.miniature.downloadHref,
                 }));
             }
         }

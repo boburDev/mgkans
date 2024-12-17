@@ -6,7 +6,8 @@ import { validateJWT } from '../middlewares/validateAdmin';
 const router = express.Router();
 
 router
-    .get('/all', category.getAllCategory)   
+    .get('/all-in', category.getAllCategory)   
+    .get('/all', category.getAllCategory1)
     .post('/create', validateJWT, uploadPhoto.single('photoFile'), category.createCategory)
     .post('/update', validateJWT, uploadPhoto.single('photoFile'), category.updateCategory)
     .post('/delete', validateJWT, category.deleteCategory)
