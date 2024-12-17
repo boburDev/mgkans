@@ -91,7 +91,11 @@ export const getAllContracts = async (req: Request, res: Response): Promise<any>
 export const getContractSingle = async (req: Request, res: Response): Promise<any> => {
     try {
         if (!req?.user?.isLegal) throw new Error("User is not legal");
-        const id = req.user.userLegal.conterAgentId
+        const id = req?.user?.userLegal?.conterAgentId
+        if (!id) {
+            res.status(200).json({ data: null });
+            return
+        }
         // Get login and password from environment variables
         const login = process.env.LOGIN;
         const password = process.env.PASSWORD;
