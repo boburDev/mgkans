@@ -28,6 +28,7 @@ export const getAllCategory = async (req: Request, res: Response) => {
     }
 };
 
+<<<<<<< HEAD
 export const getAllCategory1 = async (req: Request, res: Response) => {
     try {
         const catalog = await Category.find().select("title path route colour order").sort({ order: 1 });
@@ -39,6 +40,8 @@ export const getAllCategory1 = async (req: Request, res: Response) => {
 
 
 
+=======
+>>>>>>> cb9a7a7325fc866910e04e51a9d7f2c9fac543a3
 export const createCategory = async (req: Request, res: Response) => {
     try {
         if (!req.file) throw new Error('File is failed')
@@ -137,7 +140,37 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
 export const getAllSubCategory = async (req: Request, res: Response) => {
     try {
-        const subCategory = await SubCategory.find({ categoryId: req.query.id }).select("name order categoryId");
+        let categoryId = req.query.id
+        const categoryData = await Category.findOne({ _id: categoryId });
+
+        if (!categoryData) throw new Error("Category not found");
+        let category = categoryData.title;
+        console.log(category)
+        
+
+        const token = await accessToken();
+
+        if (!token) {
+            res.status(500).json({ message: 'Failed to fetch access token' });
+            return;
+        }
+
+        const moyskladResponse: any = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/productfolder`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept-Encoding': 'gzip',
+            },
+        });
+
+        console.log(moyskladResponse?.data?.rows.length);
+        
+        const categories = moyskladResponse?.data?.rows || [];
+        const subCategory = categories.map((i:any)=>({
+            _id: i.meta.href.split("productfolder/")[1],
+            name: i.name,
+            categoryId
+        }))
         res.status(201).json({ categories: subCategory });
     } catch (error) {
         res.status(500).json({ message: 'Error get subcategory', error });

@@ -9,7 +9,6 @@ import { fetchMetaDetails } from '../utils/fetchMetaDetails';
 import { checkToken } from '../middlewares/authMiddleware';
 
 
-const MOYSKLAD_BASE_URL = 'https://api.moysklad.ru/api/remap/1.2';
 const MOYSKLAD_HEADERS = {
     'Authorization': `Basic ${Buffer.from(`${process.env.LOGIN}:${process.env.PASSWORD}`).toString('base64')}`
     // 'Content-Type': 'application/json',
