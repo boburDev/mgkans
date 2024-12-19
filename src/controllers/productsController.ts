@@ -8,6 +8,13 @@ import axios from 'axios';
 import { fetchMetaDetails } from '../utils/fetchMetaDetails';
 import { checkToken } from '../middlewares/authMiddleware';
 
+
+const MOYSKLAD_BASE_URL = 'https://api.moysklad.ru/api/remap/1.2';
+const MOYSKLAD_HEADERS = {
+    'Authorization': `Basic ${Buffer.from(`${process.env.LOGIN}:${process.env.PASSWORD}`).toString('base64')}`
+    // 'Content-Type': 'application/json',
+};
+
 export const getAllProducts = async (req: Request, res: Response): Promise<any> => {
     try {
         let { category } = req.query;
@@ -286,6 +293,7 @@ export const getSingleProduct = async (req: Request, res: Response) => {
 export const searchProductsByName = async (req: Request, res: Response) => {
     try {
         const { name } = req.query;
+        
         const token = await accessToken();
 
         if (!name || typeof name !== "string") {
@@ -314,17 +322,31 @@ export const searchProductsByName = async (req: Request, res: Response) => {
             return;
         }
 
-        // Format the product response to only include relevant fields
-        const formattedProducts = products.map((product: any) => ({
-            id: product.id,
-            name: product.name,
-            description: product.description || '',
-            code: product.code || '',
-            price: product.salePrices?.[0]?.value || 0,
-            archived: product.archived || false,
-            productFolder: product.productFolder?.meta?.href || '',
-        }));
+        let formattedProducts: any = []
 
+        for (const product of products) {
+            let productImage = null;
+
+            if (product?.images?.meta?.href) {
+                const imageResponse: any = await axios.get(product?.images?.meta?.href, {
+                    headers: MOYSKLAD_HEADERS,
+                });
+                const images = imageResponse.data.rows;
+                if (images.length > 0) {
+                    productImage = images[0].miniature?.downloadHref || null;
+                }
+            }
+            formattedProducts.push({
+                id: product.id,
+                name: product.name,
+                description: product.description || '',
+                code: product.code || '',
+                price: product.salePrices?.[0]?.value || 0,
+                archived: product.archived || false,
+                productFolder: productImage || '',
+            })
+        }
+        
         // Send the formatted products response
         res.status(200).json({
             message: "Products retrieved successfully",
