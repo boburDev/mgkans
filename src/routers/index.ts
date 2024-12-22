@@ -14,6 +14,7 @@ import userRouter from "./users";
 import bonusRouter from "./bonusSystem";
 import contractRouter from "./contract";
 import counteragentRouter from "./counteragent";
+import discountRouter from "./discount";
 
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.use('/user', userRouter)
 router.use('/bonus', bonusRouter)
 router.use('/contract', contractRouter)
 router.use('/counteragent', counteragentRouter)
+router.use('/discount', discountRouter)
 
 export default router
