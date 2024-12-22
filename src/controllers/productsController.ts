@@ -17,7 +17,6 @@ const MOYSKLAD_HEADERS = {
 export const getAllProducts = async (req: Request, res: Response): Promise<any> => {
     try {
         let { category } = req.query;
-
         if (!category) {
             res.status(400).json({ message: 'Category is required' });
             return;
@@ -28,7 +27,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         if (!categoryData) throw new Error("Category not found");
         category = categoryData.title;
         const token = await accessToken();
-
+        
         if (!token) {
             res.status(500).json({ message: 'Failed to fetch access token' });
             return;
@@ -45,8 +44,8 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         );
 
         const products = response.data?.rows || [];
-        const groupedProducts: { [key: string]: any[] } = {}; // Adjusted to store arrays of products directly
-
+        const groupedProducts: { [key: string]: any[] } = {};
+            
         const tokenUser = req.headers?.authorization?.split(' ')[1];
         const decoded: any = await checkToken(String(tokenUser));
         let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false;
@@ -55,18 +54,15 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
             const pathName = product.pathName || '';
             const [mainCategory, subCategory] = pathName.split('/');
 
-            // Only include products matching the `category`
             if (mainCategory === category) {
                 const subCategoryName = subCategory || 'Uncategorized';
                 const subCategoryId = product.productFolder.meta.href.split("productfolder/")[1];
                 const subCategoryKey = `${subCategoryName}`;
 
-                // Initialize array for subcategory if it doesn't exist
                 if (!groupedProducts[subCategoryKey]) {
                     groupedProducts[subCategoryKey] = [];
                 }
 
-                // Fetch images metadata for the product if it has images
                 let images = [];
                 if (product.images?.meta?.href) {
                     const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
@@ -79,7 +75,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     }
                 }
 
-                // Add the product with image details to the relevant subcategory group
                 groupedProducts[subCategoryKey].push({
                     id: product.id,
                     name: product.name,
@@ -91,8 +86,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                 });
             }
         }
-
-        // Respond with grouped products
         res.status(200).json(groupedProducts);
     } catch (error: any) {
         console.error('Error fetching products by category:', error);

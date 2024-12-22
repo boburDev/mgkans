@@ -28,7 +28,6 @@ export const getAllCategory = async (req: Request, res: Response) => {
     }
 };
 
-<<<<<<< HEAD
 export const getAllCategory1 = async (req: Request, res: Response) => {
     try {
         const catalog = await Category.find().select("title path route colour order").sort({ order: 1 });
@@ -40,8 +39,6 @@ export const getAllCategory1 = async (req: Request, res: Response) => {
 
 
 
-=======
->>>>>>> cb9a7a7325fc866910e04e51a9d7f2c9fac543a3
 export const createCategory = async (req: Request, res: Response) => {
     try {
         if (!req.file) throw new Error('File is failed')
