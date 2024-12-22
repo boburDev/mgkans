@@ -6,11 +6,10 @@ import Category from '../models/category';
 
 export const getAdsByCategory = async (req: Request, res: Response) => {
     try {
-        const catalog = await Category.findOne({ route: `/${req.params.name}` });
-        
+        let catalog = req.params.name
         let ads
         if (catalog) {
-            ads = await AdvertisingModel.find({ categoryId: catalog._id }).populate('categoryId', 'name');
+            ads = await AdvertisingModel.find({ categoryId: catalog }).populate('categoryId', 'name');
         } else {
             ads = await AdvertisingModel.find({ categoryId: null }).populate('categoryId', 'name');
         }
