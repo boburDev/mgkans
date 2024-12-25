@@ -82,7 +82,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     archived: product.archived || false,
                     images: images || null,
                     subCategoryId: subCategoryId,
-                    ...(isAdmin && { price: product.salePrices[0]?.value || null }),
+                    ...(isAdmin && { buyPrice: product.salePrices[0]?.value || null }),
                 });
             }
         }
