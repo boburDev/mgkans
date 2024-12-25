@@ -50,7 +50,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
         const decoded: any = await checkToken(String(tokenUser));
         let isAdmin: any = (typeof decoded != 'string') ? (decoded?.isLegal && decoded?.userLegal?.status == 2) : false;
 
-        for (const product of products) {
+        for (const  product of products) {
             const pathName = product.pathName || '';
             const [mainCategory, subCategory] = pathName.split('/');
 
@@ -82,7 +82,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     archived: product.archived || false,
                     images: images || null,
                     subCategoryId: subCategoryId,
-                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
+                    ...(isAdmin && { price: product.salePrices[0]?.value || null }),
                 });
             }
         }
@@ -190,7 +190,7 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
                     description: product.description || '',
                     archived: product.archived || false,
                     images: images || null,
-                    ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
+                    ...(isAdmin && { price: product.salePrices[0]?.value || null }),
                 });
             }
         }
@@ -268,7 +268,7 @@ export const getSingleProduct = async (req: Request, res: Response) => {
             subcategoryId: product.productFolder.meta.href.split("productfolder/")[1],
             mainCategory: mainCategory || '',
             images: images || null,
-            ...(isAdmin && { buyPrice: product.buyPrice?.value || null }),
+            ...(isAdmin && { price: product.salePrices[0]?.value || null }),
         };
 
         // Send the formatted product response
