@@ -11,7 +11,7 @@ router
     .post('/create', validateJWT, uploadPhoto.single('photoFile'), category.createCategory)
     .post('/update', validateJWT, uploadPhoto.single('photoFile'), category.updateCategory)
     .post('/delete', validateJWT, category.deleteCategory)
-    .get('/all-subcategory', category.getAllSubCategory)
+    .get('/all-subcategory/:categoryId', category.getAllSubCategory)
     .post('/create-subcategory', validateJWT, category.createSubCategory)
     .post('/update-subcategory', validateJWT, category.updateSubCategory)
     .post('/delete-subcategory', validateJWT, category.deleteSubCategory)
