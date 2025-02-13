@@ -15,17 +15,18 @@ export const registerUser = async (req: Request, res: Response) => {
         } else {
             user = await LegalUser.findOne({ phone });
         }
-
+	console.log(user)
         if (user) {
             res.status(400).json({ message: `This ${email ? 'email' : 'phone'} already registered` });
             return
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new LegalUser({ name, email, phone, password: hashedPassword, company_name, pnfl });
+        const newUser = new LegalUser({ name, email, phone, password: hashedPassword, company_name, pnfl, conterAgentId: new Date().getTime().toString() });
         await newUser.save();
         const token = generateToken(String(newUser._id), true);
         res.status(201).json({ token });
     } catch (error) {
+	console.log(error)
         res.status(500).json({ message: 'Error creating user', error });
     }
 };

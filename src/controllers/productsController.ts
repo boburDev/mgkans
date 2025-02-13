@@ -82,7 +82,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<any> 
                     archived: product.archived || false,
                     images: images || null,
                     subCategoryId: subCategoryId,
-                    ...(isAdmin && { buyPrice: product.salePrices[0]?.value || null }),
+                    ...(isAdmin && { buyPrice: product.salePrices[0]?.value / 100 || null }),
                 });
             }
         }
@@ -190,7 +190,7 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
                     description: product.description || '',
                     archived: product.archived || false,
                     images: images || null,
-                    ...(isAdmin && { price: product.salePrices[0]?.value || null }),
+                    ...(isAdmin && { buyPrice: product.salePrices[0]?.value / 100 || null }),
                 });
             }
         }
@@ -262,13 +262,12 @@ export const getSingleProduct = async (req: Request, res: Response) => {
             name: product.name,
             description: product.description || '',
             code: product.code || '',
-            price: product.salePrices?.[0]?.value || 0,
             archived: product.archived || false,
             pathName: product.pathName || '',
             subcategoryId: product.productFolder.meta.href.split("productfolder/")[1],
             mainCategory: mainCategory || '',
             images: images || null,
-            ...(isAdmin && { price: product.salePrices[0]?.value || null }),
+            ...(isAdmin && { buyPrice: product.salePrices[0]?.value / 100 || null }),
         };
 
         // Send the formatted product response
@@ -292,6 +291,13 @@ export const searchProductsByName = async (req: Request, res: Response) => {
             res.status(400).json({ error: "Please provide a valid product name to search." });
             return;
         }
+
+	const tokenUser = req.headers?.authorization?.split(' ')[1];
+        const decoded: any = await checkToken(String(tokenUser));
+        const isAdmin: any =
+            typeof decoded !== 'string'
+                ? decoded?.isLegal && decoded?.userLegal?.status == 2
+                : false;
 
         const productsResponse: any = await axios.get(
             `https://api.moysklad.ru/api/remap/1.2/entity/product`,
@@ -333,9 +339,9 @@ export const searchProductsByName = async (req: Request, res: Response) => {
                 name: product.name,
                 description: product.description || '',
                 code: product.code || '',
-                price: product.salePrices?.[0]?.value || 0,
                 archived: product.archived || false,
                 productFolder: productImage || '',
+		...(isAdmin && { buyPrice: product.salePrices[0]?.value / 100 || null }),
             })
         }
         
