@@ -20,9 +20,16 @@ export const registerUser = async (req: Request, res: Response) => {
             res.status(400).json({ message: `This ${email ? 'email' : 'phone'} already registered` });
             return
         }
+
+        const existingPnflUser = await LegalUser.findOne({ pnfl });
+        if (existingPnflUser) {
+            return res.status(400).json({ message: "User with this PNFL already exists" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new LegalUser({ name, email, phone, password: hashedPassword, company_name, pnfl, conterAgentId: new Date().getTime().toString() });
         await newUser.save();
+        
         const token = generateToken(String(newUser._id), true);
         res.status(201).json({ token });
     } catch (error) {

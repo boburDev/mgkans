@@ -121,6 +121,12 @@ export const updateLegalUserStatus = async (req: Request, res: Response): Promis
             return;
         }
 
+        const existingConterAgent = await legalUser.findById(conterAgentId);
+        if (!existingConterAgent) {
+            res.status(400).json({ message: 'Invalid conterAgentId. No matching record found.' });
+            return;
+        }
+        
         const updatedUser = await legalUser.findByIdAndUpdate(
             userId,
             { status: statusNumber, conterAgentId: conterAgentId },
