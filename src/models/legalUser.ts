@@ -20,8 +20,8 @@ const legalUserSchema: Schema = new Schema({
     status: { type: Number, required: false, default: 1 },
     point: { type: Number, required: false, default: 0 },
     company_name: { type: String, required: true },
-    pnfl: { type: String, required: true, unique: true },
-    conterAgentId: { type: String, required: false, unique: true },
+    pnfl: { type: String, required: true  },
+    conterAgentId: { type: String, required: false },
 });
 
 const legalUser = mongoose.model<LUser>('LUser', legalUserSchema);
