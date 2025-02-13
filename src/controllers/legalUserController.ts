@@ -15,7 +15,6 @@ export const registerUser = async (req: Request, res: Response) => {
         } else {
             user = await LegalUser.findOne({ phone });
         }
-	console.log(user)
         if (user) {
             res.status(400).json({ message: `This ${email ? 'email' : 'phone'} already registered` });
             return
@@ -23,7 +22,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
         const existingPnflUser = await LegalUser.findOne({ pnfl });
         if (existingPnflUser) {
-            return res.status(400).json({ message: "User with this PNFL already exists" });
+             res.status(400).json({ message: "User with this PNFL already exists" });
+            return
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
