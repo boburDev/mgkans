@@ -5,7 +5,7 @@ import SaleModel from '../models/sale';
 
 export const getSale = async (req: Request, res: Response) => {
     try {
-        const ads = await SaleModel.find();
+        const ads = await SaleModel.find().select("path url").sort({ order: 1 });
         res.status(201).json({ data: ads });
     } catch (error) {
         res.status(500).json({ message: 'Error getting sale', error });

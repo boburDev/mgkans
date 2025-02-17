@@ -9,9 +9,9 @@ export const getAdsByCategory = async (req: Request, res: Response) => {
         let catalog = req.params.name
         let ads
         if (typeof catalog == 'string' && catalog.length == 24) {
-            ads = await AdvertisingModel.find({ categoryId: catalog }).populate('categoryId', 'name');
+            ads = await AdvertisingModel.find({ categoryId: catalog }).populate('categoryId', 'name').select("categoryId path url");
         } else {
-            ads = await AdvertisingModel.find({ categoryId: null }).populate('categoryId', 'name');
+            ads = await AdvertisingModel.find({ categoryId: null }).populate('categoryId', 'name').select("categoryId path url");
         }
         
         res.status(201).json({ data: ads });
