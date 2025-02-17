@@ -132,19 +132,34 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
             return;
         }
 
+        const login = process.env.LOGIN;
+        const password = process.env.PASSWORD;
+
+        if (!login || !password) {
+            res.status(400).json({ message: 'Missing login or password in environment variables' });
+            return;
+        }
+
+        const authString = `${login}:${password}`;
+        const encodedAuth = Buffer.from(authString).toString('base64');
+        const authHeader = `Basic ${encodedAuth}`; 
+
         // Fetch all products
         const response: any = await axios.get(
-            'https://api.moysklad.ru/api/remap/1.2/entity/product',
+            `https://api.moysklad.ru/api/remap/1.2/entity/product`,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: authHeader,
                     'Accept-Encoding': 'gzip',
                 },
+                params: {
+                    limit: 1000,
+                    offset: 0
+                }
             }
         );
 
         const products = response.data?.rows || [];
-        const groupedProducts: { [key: string]: any[] } = {};
 
         // Check admin status
         const tokenUser = req.headers?.authorization?.split(' ')[1];
@@ -154,24 +169,20 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
                 ? decoded?.isLegal && decoded?.userLegal?.status == 2
                 : false;
 
+        const subCategoryPath = products.find((product: any) => product.productFolder?.meta?.href?.includes(subcategoryId))?.pathName;
+        const groupedProducts: { [key: string]: any[] } = {};
+
         for (const product of products) {
-            const pathName = product.pathName || '';
-            const [mainCategory, subCategory] = pathName.split('/');
-
-            // Only include products matching the `subcategoryId`
-            if (
-                product.productFolder?.meta?.href &&
-                product.productFolder.meta.href.includes(subcategoryId)
-            ) {
+            if (product.pathName == subCategoryPath) {
+                const pathName = product.pathName || '';
+                const [_, subCategory] = pathName.split('/');
+                
                 const subCategoryKey = subCategory || 'Uncategorized';
-
-                // Initialize array for subcategory if it doesn't exist
                 if (!groupedProducts[subCategoryKey]) {
                     groupedProducts[subCategoryKey] = [];
                 }
 
-                // Fetch images metadata for the product if it has images
-                let images = [];
+                let images: any = [];
                 if (product.images?.meta?.href) {
                     const imageDetails = await fetchMetaDetails(product.images.meta.href, token);
                     if (imageDetails) {
@@ -183,7 +194,6 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
                     }
                 }
 
-                // Add the product with image details to the relevant subcategory group
                 groupedProducts[subCategoryKey].push({
                     id: product.id,
                     name: product.name,
@@ -195,7 +205,6 @@ export const getProductsBySubcategory = async (req: Request, res: Response) => {
             }
         }
 
-        // Respond with grouped products
         res.status(200).json(groupedProducts);
     } catch (error: any) {
         console.error('Error fetching products by subcategory:', error.message);

@@ -7,6 +7,8 @@ import axios from 'axios';
  * @param token - The authorization token for MoySklad API.
  * @returns The resolved meta details, or `null` if an error occurs.
  */
+
+
 export const fetchMetaDetails = async (href: string, token: string): Promise<any> => {
     try {
         const response:any = await axios.get(href, {

@@ -5,6 +5,7 @@ interface CategoryModel extends Document {
     route: string;
     colour: string;
     path: string;
+    categoryId: string;
     order: number;
 }
 
@@ -14,6 +15,7 @@ const CategorySchema = new Schema<CategoryModel>(
         route: { type: String, required: true },
         colour: { type: String, required: true },
         path: { type: String, required: true },
+        categoryId: { type: String, required: false },
         order: { type: Number, required: true, default: 1 }
     },
     {

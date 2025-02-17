@@ -37,8 +37,6 @@ export const getAllCategory1 = async (req: Request, res: Response) => {
     }
 };
 
-
-
 export const createCategory = async (req: Request, res: Response) => {
     try {
         if (!req.file) throw new Error('File is failed')
@@ -143,24 +141,28 @@ export const getAllSubCategory = async (req: Request, res: Response) => {
             return;
         }
 
-        // Fetch category details from your database
         const categoryData = await Category.findOne({ _id: categoryId });
         if (!categoryData) throw new Error("Category not found");
+        
+        const category = categoryData.title; 
+        
+        const login = process.env.LOGIN;
+        const password = process.env.PASSWORD;
 
-        const category = categoryData.title; // Get the title of the category
-
-        const token = await accessToken();
-        if (!token) {
-            res.status(500).json({ message: "Failed to fetch access token" });
+        if (!login || !password) {
+            res.status(400).json({ message: 'Missing login or password in environment variables' });
             return;
         }
 
-        // Fetch all subcategories from Moysklad
+        const authString = `${login}:${password}`;
+        const encodedAuth = Buffer.from(authString).toString('base64');
+        const authHeader = `Basic ${encodedAuth}`; 
+
         const moyskladResponse: any = await axios.get(
             `https://api.moysklad.ru/api/remap/1.2/entity/productfolder`,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: authHeader,
                     "Content-Type": "application/json",
                     "Accept-Encoding": "gzip",
                 },
@@ -168,15 +170,14 @@ export const getAllSubCategory = async (req: Request, res: Response) => {
         );
 
         const categories = moyskladResponse?.data?.rows || [];
-
-        // Filter subcategories belonging to the given category
         const subCategories = categories
             .filter((item: any) => item.pathName?.startsWith(category))
             .map((i: any) => ({
                 _id: i.meta.href.split("productfolder/")[1],
                 name: i.name,
-                categoryId, // Assign parent categoryId
-            }));
+                categoryId
+            }))
+            .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
         res.status(200).json({ categories: subCategories });
     } catch (error: any) {
@@ -184,7 +185,6 @@ export const getAllSubCategory = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error fetching subcategories", error: error.message });
     }
 };
-
 
 export const createSubCategory = async (req: Request, res: Response) => {
     try {
